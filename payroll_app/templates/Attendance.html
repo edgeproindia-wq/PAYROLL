@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Attendance{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Attendance</h1>
+  <div class="card shadow-sm border-0 p-4">
+    <h3>Attendance Records</h3>
+    <form method="get" class="row g-2 align-items-end mb-3">
+      <div class="col-auto">
+        <label class="form-label small mb-1">Employee Name</label>
+        <input type="text" name="emp_search" value="{{ emp_search }}" placeholder="Search name..." class="form-control form-control-sm">
+      </div>
+      <div class="col-auto">
+        <label class="form-label small mb-1">From</label>
+        <input type="date" name="from_date" value="{{ from_date }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-auto">
+        <label class="form-label small mb-1">To</label>
+        <input type="date" name="to_date" value="{{ to_date }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-auto">
+        <label class="form-label small mb-1">Status</label>
+        <select name="status" class="form-select form-select-sm">
+          <option value="">All</option>
+          <option value="PRESENT" {% if status_filter == 'PRESENT' %}selected{% endif %}>Present</option>
+          <option value="ABSENT" {% if status_filter == 'ABSENT' %}selected{% endif %}>Absent</option>
+          <option value="HALF_DAY" {% if status_filter == 'HALF_DAY' %}selected{% endif %}>Half Day</option>
+          <option value="LEAVE" {% if status_filter == 'LEAVE' %}selected{% endif %}>On Leave</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        <a href="{% url 'attendance' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
+      </div>
+    </form>
+    <table class="table table-hover align-middle">
+      <tr><th>Employee</th><th>Date</th><th>Status</th><th>Remarks</th></tr>
+      {% for r in records %}
+      <tr>
+        <td>{{ r.employee.full_name }}</td>
+        <td>{{ r.date }}</td>
+        <td><span class="badge badge-{{ r.status|lower }}">{{ r.get_status_display }}</span></td>
+        <td>{{ r.remarks }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">No attendance records yet.</td></tr>
+      {% endfor %}
+    </table>
+    {% if records.has_other_pages %}
+    <nav class="mt-3"><ul class="pagination pagination-sm mb-0">
+      {% if records.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ records.previous_page_number }}">Previous</a></li>{% endif %}
+      {% for num in records.paginator.page_range %}<li class="page-item {% if records.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>{% endfor %}
+      {% if records.has_next %}<li class="page-item"><a class="page-link" href="?page={{ records.next_page_number }}">Next</a></li>{% endif %}
+    </ul></nav>
+    {% endif %}
+  </div>
+  <div class="chart-card card shadow-sm border-0 p-4 mb-4" style="max-width:420px;">
+    <h3>Attendance Status Breakdown</h3>
+    <canvas id="attChart"></canvas>
+  </div>
+  <script>
+    new Chart(document.getElementById('attChart'), {
+      type: 'pie',
+      data: { labels: {{ chart_labels|safe }}, datasets: [{ data: {{ chart_values|safe }}, backgroundColor: ['#198754','#dc3545','#ffc107','#0d6efd'] }] },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  </script>
+{% endblock %}

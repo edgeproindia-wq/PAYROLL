@@ -1,0 +1,12 @@
+﻿{% extends "base.html" %}
+{% block title %}Pending Payroll{% endblock %}
+{% block content %}
+  <h1>Pending Payroll</h1>
+  <p style="color:#64748b;">Payroll runs not yet released.</p>
+  <table>
+    <tr><th>Month</th><th>Status</th><th>Employees</th><th>Created</th></tr>
+    {% for run in pending_runs %}
+    <tr><td>{{ run.month }}</td><td><span class="status-badge status-{{ run.status|lower }}">{{ run.get_status_display }}</span></td><td>{{ run.lines.count }}</td><td>{{ run.created_at|date:"d M Y" }}</td></tr>
+    {% empty %}<tr><td colspan="4">No pending payroll runs.</td></tr>{% endfor %}
+  </table>
+{% endblock %}

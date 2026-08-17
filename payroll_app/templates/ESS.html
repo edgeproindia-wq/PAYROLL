@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Employee Self Service{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Employee Self Service</h1>
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Total Payslips</div>
+        <div class="value">{{ total_payslips }}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Pending Leave</div>
+        <div class="value">{{ pending_leave }}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Pending Reimbursements</div>
+        <div class="value">{{ pending_reimbursements }}</div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="card shadow-sm border-0 p-4 mb-4">
+    <h3>Payslips (Recent 25)</h3>
+    <table class="table table-hover align-middle">
+      <tr><th>Employee</th><th>Payroll Month</th><th>Basic</th><th>Gross</th><th>Net Pay</th></tr>
+      {% for l in payslip_lines %}
+      <tr>
+        <td>{{ l.employee.full_name }}</td>
+        <td>{{ l.payroll_run.month }}</td>
+        <td>{{ l.basic }}</td>
+        <td>{{ l.gross_salary }}</td>
+        <td>{{ l.net_pay }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No released payslips yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="card shadow-sm border-0 p-4 mb-4">
+    <h3>Leave Requests (Recent 25)</h3>
+    <table class="table table-hover align-middle">
+      <tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Status</th></tr>
+      {% for l in leave_list %}
+      <tr>
+        <td>{{ l.employee.full_name }}</td>
+        <td>{{ l.get_leave_type_display }}</td>
+        <td>{{ l.from_date }}</td>
+        <td>{{ l.to_date }}</td>
+        <td>{{ l.reason }}</td>
+        <td><span class="badge badge-{{ l.status|lower }}">{{ l.get_status_display }}</span></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6">No leave requests yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="card shadow-sm border-0 p-4">
+    <h3>Reimbursements (Recent 25)</h3>
+    <table class="table table-hover align-middle">
+      <tr><th>Employee</th><th>Category</th><th>Amount</th><th>Date</th><th>Description</th><th>Status</th></tr>
+      {% for r in reimbursement_list %}
+      <tr>
+        <td>{{ r.employee.full_name }}</td>
+        <td>{{ r.get_category_display }}</td>
+        <td>{{ r.amount }}</td>
+        <td>{{ r.date }}</td>
+        <td>{{ r.description }}</td>
+        <td><span class="badge badge-{{ r.status|lower }}">{{ r.get_status_display }}</span></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6">No reimbursement requests yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="chart-card card shadow-sm border-0 p-4 mb-4" style="max-width:420px;">
+    <h3>Payslips by Month</h3>
+    <canvas id="payslipMonthChart"></canvas>
+  </div>
+  <script>
+    new Chart(document.getElementById('payslipMonthChart'), {
+      type: 'pie',
+      data: { labels: {{ month_labels|safe }}, datasets: [{ data: {{ month_values|safe }}, backgroundColor: ['#0d6efd','#198754','#ffc107','#dc3545','#6f42c1','#0dcaf0','#d63384','#6c757d'] }] },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  </script>
+{% endblock %}

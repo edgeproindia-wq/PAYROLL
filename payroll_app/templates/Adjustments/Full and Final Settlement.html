@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Full & Final Settlement{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Full &amp; Final Settlement</h1>
+  <div class="card shadow-sm border-0 p-4 mb-4">
+    <h3>New Settlement</h3>
+    <form method="post">
+      {% csrf_token %}
+      <div class="row g-3">
+        {% for field in form %}
+        <div class="col-md-3">
+          <label class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|striptags }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn btn-primary mt-3">Save</button>
+    </form>
+  </div>
+  <div class="card shadow-sm border-0 p-4">
+    <h3>All Settlements</h3>
+    <table class="table table-hover align-middle">
+      <tr><th>Employee</th><th>Last Working Day</th><th>Pending Salary</th><th>Leave Encashment</th><th>Deductions</th></tr>
+      {% for r in records %}
+      <tr>
+        <td>{{ r.employee.full_name }}</td>
+        <td>{{ r.last_working_day }}</td>
+        <td>{{ r.pending_salary }}</td>
+        <td>{{ r.leave_encashment }}</td>
+        <td>{{ r.deductions }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No settlements yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endblock %}

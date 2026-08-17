@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}HR - Manage Employee Records & Salary{% endblock %}
+{% block content %}
+  <h1>HR - Manage Employee Records & Salary</h1>
+
+  <div style="background:#fff; border-radius:8px; padding:20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+    <h3>Role Permissions</h3>
+    <table>
+      <tr><th>Module</th><th>View</th><th>Add</th><th>Edit</th><th>Delete</th><th>Approve</th></tr>
+      <tr><td>Employee Master</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>-</td></tr>
+      <tr><td>Salary Structure</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>-</td><td>-</td></tr>
+      <tr><td>Attendance</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>-</td><td>-</td></tr>
+      <tr><td>Leave Management</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>-</td><td>&#10003;</td></tr>
+      <tr><td>Increment / Promotion</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>-</td><td>-</td></tr>
+      <tr><td>Payroll Processing</td><td>&#10003;</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+    </table>
+  </div>
+
+  <h3>Users Assigned This Role</h3>
+  <table>
+    <tr><th>Employee Code</th><th>Name</th><th>Department</th><th>Assigned On</th></tr>
+    {% for row in role_assignments %}
+    <tr>
+      <td>{{ row.employee_code }}</td>
+      <td>{{ row.employee_name }}</td>
+      <td>{{ row.department }}</td>
+      <td>{{ row.assigned_on }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4">No users assigned to this role yet.</td></tr>
+    {% endfor %}
+  </table>
+{% endblock %}

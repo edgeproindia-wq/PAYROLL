@@ -1,0 +1,18 @@
+﻿{% extends "base.html" %}
+{% block title %}Employees On Leave  <div style="display:flex; justify-content:flex-start; margin-top:20px;">
+    <a href="{% url 'pending_payroll_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">&larr; Previous: Pending Payroll</a>
+  </div>
+{% endblock %}
+{% block content %}
+  <h1>Employees On Leave</h1>
+  <p style="color:#64748b;">Approved leave covering {{ today }}.</p>
+  <table>
+    <tr><th>Employee</th><th>Leave Type</th><th>From</th><th>To</th></tr>
+    {% for l in on_leave %}
+    <tr><td>{{ l.employee.employee_code }} - {{ l.employee.full_name }}</td><td>{{ l.get_leave_type_display }}</td><td>{{ l.from_date }}</td><td>{{ l.to_date }}</td></tr>
+    {% empty %}<tr><td colspan="4">No employees currently on approved leave.</td></tr>{% endfor %}
+  </table>
+  <div style="display:flex; justify-content:flex-start; margin-top:20px;">
+    <a href="{% url 'pending_payroll_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">&larr; Previous: Pending Payroll</a>
+  </div>
+{% endblock %}

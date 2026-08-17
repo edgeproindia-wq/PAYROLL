@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+  <div class="mb-4">
+    <h1 class="mb-1">Dashboard</h1>
+    <p class="text-secondary mb-0">Welcome back — here's what's happening today.</p>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 h-100 kpi-card">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:44px;height:44px;background:#e7f1ff;">
+            <span style="font-size:20px;">👥</span>
+          </div>
+          <div>
+            <div class="label">Active Employees</div>
+            <div class="value">{{ total_employees }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 h-100 kpi-card">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:44px;height:44px;background:#e6f8ee;">
+            <span style="font-size:20px;">💰</span>
+          </div>
+          <div>
+            <div class="label">Salary Structures Set</div>
+            <div class="value">{{ total_salary_structures }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 h-100 kpi-card">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:44px;height:44px;background:#fff4e0;">
+            <span style="font-size:20px;">📋</span>
+          </div>
+          <div>
+            <div class="label">Pending Leave Requests</div>
+            <div class="value">{{ pending_leave }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 h-100 kpi-card">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:44px;height:44px;background:#fde8ea;">
+            <span style="font-size:20px;">🧾</span>
+          </div>
+          <div>
+            <div class="label">Pending Reimbursements</div>
+            <div class="value">{{ pending_reimbursements }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-1">Quick Actions</h3>
+        <p class="text-secondary small mb-0">Jump straight into the most common tasks.</p>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'employee_master' %}" class="btn btn-primary btn-sm">+ Add Employee</a>
+        <a href="{% url 'attendance' %}" class="btn btn-outline-secondary btn-sm">Mark Attendance</a>
+        <a href="{% url 'payroll_processing' %}" class="btn btn-outline-secondary btn-sm">Run Payroll</a>
+        <a href="{% url 'leave_management' %}" class="btn btn-outline-secondary btn-sm">Manage Leave</a>
+      </div>
+    </div>
+  </div>
+
+  {% if latest_payroll_run %}
+  <div class="card shadow-sm border-0 p-4 mb-4">
+    <h3>Latest Payroll Run</h3>
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <div class="fw-bold fs-5">{{ latest_payroll_run.month }}</div>
+        <div class="text-secondary small">Created {{ latest_payroll_run.created_at|date:"d M Y" }}</div>
+      </div>
+      <span class="badge badge-{{ latest_payroll_run.status|lower }} fs-6">{{ latest_payroll_run.get_status_display }}</span>
+    </div>
+    <p class="text-secondary small mt-2 mb-0">Payroll runs awaiting your approval: <strong>{{ pending_approvals }}</strong></p>
+  </div>
+  {% endif %}
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="chart-card card shadow-sm border-0 p-4">
+        <h3>Employees by Department</h3>
+        <canvas id="deptChart"></canvas>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="chart-card card shadow-sm border-0 p-4">
+        <h3>Employee Status</h3>
+        <canvas id="statusChart"></canvas>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="chart-card card shadow-sm border-0 p-4">
+        <h3>Payroll Run Status</h3>
+        <canvas id="runChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const palette = ['#0d6efd','#198754','#ffc107','#dc3545','#6f42c1','#0dcaf0','#d63384','#6c757d'];
+
+    new Chart(document.getElementById('deptChart'), {
+      type: 'doughnut',
+      data: { labels: {{ dept_labels|safe }}, datasets: [{ data: {{ dept_values|safe }}, backgroundColor: palette, borderWidth: 3, borderColor: '#fff', hoverOffset: 8 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 14, usePointStyle: true } } } }
+    });
+
+    new Chart(document.getElementById('statusChart'), {
+      type: 'doughnut',
+      data: { labels: {{ status_labels|safe }}, datasets: [{ data: {{ status_values|safe }}, backgroundColor: palette, borderWidth: 3, borderColor: '#fff', hoverOffset: 8 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 14, usePointStyle: true } } } }
+    });
+
+    new Chart(document.getElementById('runChart'), {
+      type: 'doughnut',
+      data: { labels: {{ run_labels|safe }}, datasets: [{ data: {{ run_values|safe }}, backgroundColor: palette.slice(3), borderWidth: 3, borderColor: '#fff', hoverOffset: 8 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 14, usePointStyle: true } } } }
+    });
+  </script>
+{% endblock %}

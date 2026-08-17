@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{% block title %}Payroll Management{% endblock %} - Edge Pro Axis</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; background:#f1f4f9; }
+  .sidebar { width:230px; background:#0f172a; color:#fff; height:100vh; overflow-y:auto; padding:15px; position:fixed; top:0; left:0; }
+  .sidebar h2 { font-size:15px; font-weight:700; border-bottom:1px solid #334155; padding-bottom:12px; letter-spacing:0.02em; }
+  .sidebar a { display:block; color:#cbd5e1; text-decoration:none; padding:7px 10px; font-size:13px; border-radius:6px; margin-bottom:1px; transition: background 0.12s, color 0.12s; }
+  .sidebar a:hover, .sidebar a.active { background:#1e293b; color:#fff; }
+  .sidebar .group-toggle { display:flex; justify-content:space-between; align-items:center; color:#94a3b8; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; padding:10px 8px 6px; cursor:pointer; user-select:none; }
+  .sidebar .group-toggle:hover { color:#e2e8f0; }
+  .sidebar .group-toggle .chevron { transition: transform 0.15s; font-size:10px; }
+  .sidebar .group-toggle[aria-expanded="true"] .chevron { transform: rotate(90deg); }
+  .topbar { margin-left:230px; background:#fff; border-bottom:1px solid #e2e8f0; padding:12px 2rem; display:flex; justify-content:space-between; align-items:center; }
+  .topbar .page-name { font-size:13px; color:#64748b; }
+  .content { margin-left:230px; padding:2rem; }
+  .content h1 { letter-spacing:-0.01em; }
+  .kpi-card .label { color:#6c757d; font-size:12px; font-weight:500; text-transform:uppercase; letter-spacing:0.03em; }
+  .kpi-card .value { font-size:1.6rem; font-weight:700; color:#212529; margin-top:6px; }
+  .chart-card canvas { max-height:280px; height:280px !important; }
+  th { text-transform:uppercase; font-size:11px; letter-spacing:0.03em; }
+  .badge-completed, .badge-approved, .badge-active, .badge-released, .badge-validated { background-color: var(--bs-success-bg-subtle) !important; color: var(--bs-success-text-emphasis) !important; }
+  .badge-pending, .badge-draft { background-color: var(--bs-warning-bg-subtle) !important; color: var(--bs-warning-text-emphasis) !important; }
+  .badge-rejected, .badge-terminated { background-color: var(--bs-danger-bg-subtle) !important; color: var(--bs-danger-text-emphasis) !important; }
+</style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>EDGE PRO AXIS<br><span style="font-size:11px;font-weight:400;color:#94a3b8;letter-spacing:0.05em;">PAYROLL SUITE</span></h2>
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+
+    <div class="group-toggle" data-bs-toggle="collapse" data-bs-target="#grpEmployee" aria-expanded="true">
+      <span>Employee</span><span class="chevron">&#9656;</span>
+    </div>
+    <div class="collapse show" id="grpEmployee">
+      <a href="{% url 'employee_master' %}" class="{% if request.resolver_match.url_name == 'employee_master' %}active{% endif %}">Employee Master</a>
+      <a href="{% url 'master_data_upload' %}" class="{% if request.resolver_match.url_name == 'master_data_upload' %}active{% endif %}">Master Data Upload</a>
+      <a href="{% url 'salary_structure' %}" class="{% if request.resolver_match.url_name == 'salary_structure' %}active{% endif %}">Salary Structure</a>
+      <a href="{% url 'attendance' %}" class="{% if request.resolver_match.url_name == 'attendance' %}active{% endif %}">Attendance</a>
+      <a href="{% url 'leave_management' %}" class="{% if request.resolver_match.url_name == 'leave_management' %}active{% endif %}">Leave Management</a>
+      <a href="{% url 'reimbursement' %}" class="{% if request.resolver_match.url_name == 'reimbursement' %}active{% endif %}">Reimbursement</a>
+    </div>
+
+    <div class="group-toggle" data-bs-toggle="collapse" data-bs-target="#grpPayroll" aria-expanded="false">
+      <span>Payroll</span><span class="chevron">&#9656;</span>
+    </div>
+    <div class="collapse" id="grpPayroll">
+      <a href="{% url 'payroll_processing' %}" class="{% if request.resolver_match.url_name == 'payroll_processing' %}active{% endif %}">Payroll Processing</a>
+      <a href="{% url 'payroll_preview' %}" class="{% if request.resolver_match.url_name == 'payroll_preview' %}active{% endif %}">Payroll Preview</a>
+      <a href="{% url 'payroll_validation' %}" class="{% if request.resolver_match.url_name == 'payroll_validation' %}active{% endif %}">Payroll Validation</a>
+      <a href="{% url 'payroll_approval' %}" class="{% if request.resolver_match.url_name == 'payroll_approval' %}active{% endif %}">Payroll Approval</a>
+      <a href="{% url 'payroll_release' %}" class="{% if request.resolver_match.url_name == 'payroll_release' %}active{% endif %}">Payroll Release</a>
+    </div>
+
+    <div class="group-toggle" data-bs-toggle="collapse" data-bs-target="#grpTax" aria-expanded="false">
+      <span>Tax &amp; Compliance</span><span class="chevron">&#9656;</span>
+    </div>
+    <div class="collapse" id="grpTax">
+      <a href="{% url 'statutory_compliance' %}" class="{% if request.resolver_match.url_name == 'statutory_compliance' %}active{% endif %}">Statutory Compliance</a>
+      <a href="{% url 'income_tax' %}" class="{% if request.resolver_match.url_name == 'income_tax' %}active{% endif %}">Income Tax</a>
+      <a href="{% url 'compliance_reports' %}" class="{% if request.resolver_match.url_name == 'compliance_reports' %}active{% endif %}">Compliance Reports</a>
+    </div>
+
+    <div class="group-toggle" data-bs-toggle="collapse" data-bs-target="#grpAdj" aria-expanded="false">
+      <span>Adjustments</span><span class="chevron">&#9656;</span>
+    </div>
+    <div class="collapse" id="grpAdj">
+      <a href="{% url 'arrears' %}" class="{% if request.resolver_match.url_name == 'arrears' %}active{% endif %}">Arrears</a>
+      <a href="{% url 'full_final_settlement' %}" class="{% if request.resolver_match.url_name == 'full_final_settlement' %}active{% endif %}">Full &amp; Final Settlement</a>
+    </div>
+
+    <div class="group-toggle" data-bs-toggle="collapse" data-bs-target="#grpPay" aria-expanded="false">
+      <span>Payslips &amp; Payments</span><span class="chevron">&#9656;</span>
+    </div>
+    <div class="collapse" id="grpPay">
+      <a href="{% url 'payslips' %}" class="{% if request.resolver_match.url_name == 'payslips' %}active{% endif %}">Payslips</a>
+      <a href="{% url 'bank_transfer' %}" class="{% if request.resolver_match.url_name == 'bank_transfer' %}active{% endif %}">Bank Transfer</a>
+    </div>
+
+    <div class="group-toggle" data-bs-toggle="collapse" data-bs-target="#grpReports" aria-expanded="false">
+      <span>Reports</span><span class="chevron">&#9656;</span>
+    </div>
+    <div class="collapse" id="grpReports">
+      <a href="{% url 'reports_analytics' %}" class="{% if request.resolver_match.url_name == 'reports_analytics' %}active{% endif %}">Reports &amp; Analytics</a>
+    </div>
+
+    <div class="group-toggle" data-bs-toggle="collapse" data-bs-target="#grpSelf" aria-expanded="false">
+      <span>Self Service</span><span class="chevron">&#9656;</span>
+    </div>
+    <div class="collapse" id="grpSelf">
+      <a href="{% url 'ess' %}" class="{% if request.resolver_match.url_name == 'ess' %}active{% endif %}">ESS</a>
+      <a href="{% url 'notifications' %}" class="{% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">Notifications</a>
+    </div>
+
+    <div class="group-toggle" data-bs-toggle="collapse" data-bs-target="#grpAdmin" aria-expanded="false">
+      <span>Admin</span><span class="chevron">&#9656;</span>
+    </div>
+    <div class="collapse" id="grpAdmin">
+      <a href="{% url 'user_roles_permissions' %}" class="{% if request.resolver_match.url_name == 'user_roles_permissions' %}active{% endif %}">User Roles &amp; Permissions</a>
+      <a href="{% url 'settings' %}" class="{% if request.resolver_match.url_name == 'settings' %}active{% endif %}">Settings</a>
+    </div>
+  </div>
+  <div class="topbar">
+    <span class="page-name">Employee Payroll &amp; HR Management</span>
+    <span class="page-name">{{ request.user.get_username }} &middot; <a href="{% url 'logout' %}" class="text-decoration-none">Logout</a></span>
+  </div>
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

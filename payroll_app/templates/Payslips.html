@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Payslips{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Payslips</h1>
+  <div class="card shadow-sm border-0 p-4">
+    <h3>Released Payslips</h3>
+    <table class="table table-hover align-middle">
+      <tr><th>Employee</th><th>Payroll Month</th><th>Basic</th><th>Gross</th><th>Net Pay</th></tr>
+      {% for l in lines %}
+      <tr>
+        <td>{{ l.employee.full_name }}</td>
+        <td>{{ l.payroll_run.month }}</td>
+        <td>{{ l.basic }}</td>
+        <td>{{ l.gross_salary }}</td>
+        <td>{{ l.net_pay }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No released payslips yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Income Tax{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Income Tax (TDS)</h1>
+  <div class="card shadow-sm border-0 p-4">
+    <h3>TDS Details</h3>
+    <table class="table table-hover align-middle">
+      <tr><th>Employee</th><th>Annual Gross</th><th>Annual TDS</th><th>Monthly TDS</th></tr>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.employee.full_name }}</td>
+        <td>{{ r.annual_gross }}</td>
+        <td>{{ r.tds_annual }}</td>
+        <td>{{ r.tds_monthly }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">No salary structures set yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="chart-card card shadow-sm border-0 p-4 mb-4">
+    <h3>Monthly TDS by Employee</h3>
+    <canvas id="itChart"></canvas>
+  </div>
+  <script>
+    new Chart(document.getElementById('itChart'), {
+      type: 'bar',
+      data: { labels: {{ chart_labels|safe }}, datasets: [{ label: 'Monthly TDS', data: {{ chart_values|safe }}, backgroundColor: '#6f42c1' }] },
+      options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+    });
+  </script>
+{% endblock %}

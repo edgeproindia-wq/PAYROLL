@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Payroll{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Payroll</h1>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Total Payroll Runs</div>
+        <div class="value">{{ summary.total_runs }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Employees Paid</div>
+        <div class="value">{{ summary.total_employees_paid }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Total Net Payout</div>
+        <div class="value">{{ summary.total_net_payout }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Locked Periods</div>
+        <div class="value">{{ summary.locked_count }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 p-4 mb-4">
+    <h3>Run New Payroll</h3>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label">Month</label>
+          <select name="month" class="form-select" required>
+            <option value="">Select month...</option>
+            {% for m in month_options %}
+              <option value="{{ m }}">{{ m }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-primary">Run Payroll</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="card shadow-sm border-0 p-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <h3 class="mb-0">All Payroll Runs</h3>
+      <input type="text" id="payrollSearch" class="form-control" style="max-width:260px;" placeholder="Search month or status...">
+    </div>
+    <table class="table table-hover align-middle" id="payrollTable">
+      <thead>
+        <tr>
+          <th class="sortable" data-col="0" style="cursor:pointer;">Month <span class="sort-arrow"></span></th>
+          <th class="sortable" data-col="1" style="cursor:pointer;">Status <span class="sort-arrow"></span></th>
+          <th class="sortable" data-col="2" style="cursor:pointer;">Created <span class="sort-arrow"></span></th>
+          <th class="sortable" data-col="3" style="cursor:pointer;">Employees <span class="sort-arrow"></span></th>
+          <th>Details</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for run in payroll_runs %}
+      <tr>
+        <td>{{ run.month }}</td>
+        <td><span class="badge badge-{{ run.status|lower }}">{{ run.get_status_display }}</span></td>
+        <td data-sort="{{ run.created_at|date:'Y-m-d' }}">{{ run.created_at|date:"d M Y" }}</td>
+        <td>{{ run.lines.count }}</td>
+        <td><a href="{% url 'payroll_run_detail' run.id %}" class="link-primary small">View</a></td>
+        <td>
+          {% if run.status == "DRAFT" %}
+          <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="action" value="validate"><input type="hidden" name="run_id" value="{{ run.id }}"><button type="submit" class="btn btn-primary btn-sm">Validate</button></form>
+          {% if not run.is_locked %}
+          <form method="post" class="d-inline" onsubmit="var m=prompt('New month name:', '{{ run.month }}'); if(!m){return false;} this.querySelector('[name=new_month]').value = m;">{% csrf_token %}<input type="hidden" name="action" value="edit_month"><input type="hidden" name="run_id" value="{{ run.id }}"><input type="hidden" name="new_month" value=""><button type="submit" class="btn btn-outline-primary btn-sm">Edit</button></form>
+          <form method="post" class="d-inline" onsubmit="return confirm('Delete this draft payroll run permanently?');">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="run_id" value="{{ run.id }}"><button type="submit" class="btn btn-outline-danger btn-sm">Delete</button></form>
+          {% endif %}
+          {% elif run.status == "VALIDATED" %}
+          <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="action" value="approve"><input type="hidden" name="run_id" value="{{ run.id }}"><button type="submit" class="btn btn-warning btn-sm">Approve</button></form>
+          <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="action" value="reject"><input type="hidden" name="run_id" value="{{ run.id }}"><button type="submit" class="btn btn-danger btn-sm">Reject</button></form>
+          {% elif run.status == "APPROVED" %}
+          <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="action" value="release"><input type="hidden" name="run_id" value="{{ run.id }}"><button type="submit" class="btn btn-success btn-sm">Release</button></form>
+          {% else %}
+          <span class="text-secondary small">Completed</span>
+          {% endif %}
+          {% if not run.is_locked %}
+          <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="action" value="reprocess"><input type="hidden" name="run_id" value="{{ run.id }}"><button type="submit" class="btn btn-outline-secondary btn-sm">Reprocess</button></form>
+          {% endif %}
+          {% if run.is_locked %}
+          <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="action" value="unlock"><input type="hidden" name="run_id" value="{{ run.id }}"><button type="submit" class="btn btn-secondary btn-sm">Unlock</button></form>
+          {% else %}
+          <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="action" value="lock"><input type="hidden" name="run_id" value="{{ run.id }}"><button type="submit" class="btn btn-outline-danger btn-sm">Lock</button></form>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6">No payroll runs yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    {% if payroll_runs.has_other_pages %}
+    <nav class="mt-3"><ul class="pagination pagination-sm mb-0 justify-content-center">
+      {% if payroll_runs.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ payroll_runs.previous_page_number }}">Previous</a></li>{% endif %}
+      <li class="page-item disabled"><span class="page-link">Page {{ payroll_runs.number }} of {{ payroll_runs.paginator.num_pages }}</span></li>
+      {% if payroll_runs.has_next %}<li class="page-item"><a class="page-link" href="?page={{ payroll_runs.next_page_number }}">Next</a></li>{% endif %}
+    </ul></nav>
+    {% endif %}
+  </div>
+
+  <script>
+    document.getElementById('payrollSearch').addEventListener('input', function () {
+      const term = this.value.toLowerCase();
+      document.querySelectorAll('#payrollTable tbody tr').forEach(function (row) {
+        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+      });
+    });
+
+    document.querySelectorAll('#payrollTable th.sortable').forEach(function (th) {
+      let asc = true;
+      th.addEventListener('click', function () {
+        const col = parseInt(th.dataset.col, 10);
+        const tbody = document.querySelector('#payrollTable tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => r.children.length > 1);
+        rows.sort(function (a, b) {
+          const cellA = a.children[col];
+          const cellB = b.children[col];
+          const valA = cellA.dataset.sort || cellA.textContent.trim().toLowerCase();
+          const valB = cellB.dataset.sort || cellB.textContent.trim().toLowerCase();
+          if (valA < valB) return asc ? -1 : 1;
+          if (valA > valB) return asc ? 1 : -1;
+          return 0;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+        document.querySelectorAll('#payrollTable th.sortable .sort-arrow').forEach(a => a.textContent = '');
+        th.querySelector('.sort-arrow').textContent = asc ? '▲' : '▼';
+        asc = !asc;
+      });
+    });
+  </script>
+{% endblock %}

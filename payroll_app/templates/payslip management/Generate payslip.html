@@ -1,0 +1,8 @@
+﻿{% extends "base.html" %}
+{% block title %}Generate Payslip{% endblock %}
+{% block content %}
+  <h1>Generate Payslip</h1>
+  <div class="status-card">
+    <p>Payslips are generated automatically when you run a new payroll. <a href="{% url 'payroll_combined' %}" style="color:#2563eb;">Go to Payroll Processing &rarr;</a></p>
+  </div>
+{% endblock %}

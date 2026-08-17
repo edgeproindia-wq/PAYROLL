@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Reports and Analytics{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Reports and Analytics</h1>
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Total Employees</div>
+        <div class="value">{{ total_employees }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Total Payroll Runs</div>
+        <div class="value">{{ total_payroll_runs }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Released</div>
+        <div class="value">{{ total_released }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Pending Leave</div>
+        <div class="value">{{ total_pending_leave }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="chart-card card shadow-sm border-0 p-4">
+    <h3>Overview</h3>
+    <canvas id="raChart"></canvas>
+  </div>
+  <script>
+    new Chart(document.getElementById('raChart'), {
+      type: 'bar',
+      data: { labels: {{ chart_labels|safe }}, datasets: [{ data: {{ chart_values|safe }}, backgroundColor: ['#6f42c1','#0d6efd','#198754','#ffc107'] }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  </script>
+{% endblock %}

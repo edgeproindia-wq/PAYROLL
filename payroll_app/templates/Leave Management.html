@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Leave Management{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Leave Management</h1>
+  <div class="card shadow-sm border-0 p-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <h3 class="mb-0">Leave Requests</h3>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="?status=" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+        <a href="?status=PENDING" class="btn btn-sm {% if status_filter == 'PENDING' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Pending</a>
+        <a href="?status=APPROVED" class="btn btn-sm {% if status_filter == 'APPROVED' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Approved</a>
+        <a href="?status=REJECTED" class="btn btn-sm {% if status_filter == 'REJECTED' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Rejected</a>
+        <a href="?status=SALARY_PENDING" class="btn btn-sm {% if status_filter == 'SALARY_PENDING' %}btn-warning{% else %}btn-outline-warning{% endif %}">Salary Pending</a>
+      </div>
+    </div>
+    {% if latest_run %}
+    <p class="text-secondary small">Salary status is based on the latest released payroll run: <strong>{{ latest_run.month }}</strong>.</p>
+    {% else %}
+    <p class="text-secondary small">No payroll run has been released yet, so every employee shows as salary pending.</p>
+    {% endif %}
+    <table class="table table-hover align-middle">
+      <tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Leave Status</th><th>Salary Status</th><th>Action</th></tr>
+      {% for l in leave_requests %}
+      <tr>
+        <td>{{ l.employee.full_name }}</td>
+        <td>{{ l.get_leave_type_display }}</td>
+        <td>{{ l.from_date }}</td>
+        <td>{{ l.to_date }}</td>
+        <td>{{ l.reason }}</td>
+        <td><span class="badge badge-{{ l.status|lower }}">{{ l.get_status_display }}</span></td>
+        <td>
+          {% if l.salary_pending %}
+          <span class="badge badge-pending">Pending</span>
+          {% else %}
+          <span class="badge badge-completed">Paid</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if l.status == 'PENDING' %}
+          <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="action" value="approve"><input type="hidden" name="leave_id" value="{{ l.id }}"><button type="submit" class="btn btn-success btn-sm">Approve</button></form>
+          <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="action" value="reject"><input type="hidden" name="leave_id" value="{{ l.id }}"><button type="submit" class="btn btn-danger btn-sm">Reject</button></form>
+          {% else %}
+          <span class="text-secondary small">-</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8">No leave requests match this filter.</td></tr>
+      {% endfor %}
+    </table>
+    {% if leave_requests.has_other_pages %}
+    <nav class="mt-3"><ul class="pagination pagination-sm mb-0">
+      {% if leave_requests.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ leave_requests.previous_page_number }}&status={{ status_filter }}">Previous</a></li>{% endif %}
+      {% for num in leave_requests.paginator.page_range %}<li class="page-item {% if leave_requests.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}&status={{ status_filter }}">{{ num }}</a></li>{% endfor %}
+      {% if leave_requests.has_next %}<li class="page-item"><a class="page-link" href="?page={{ leave_requests.next_page_number }}&status={{ status_filter }}">Next</a></li>{% endif %}
+    </ul></nav>
+    {% endif %}
+  </div>
+  <div class="chart-card card shadow-sm border-0 p-4 mb-4" style="max-width:420px;">
+    <h3>Leave Type Breakdown</h3>
+    <canvas id="leaveChart"></canvas>
+  </div>
+  <script>
+    new Chart(document.getElementById('leaveChart'), {
+      type: 'pie',
+      data: { labels: {{ chart_labels|safe }}, datasets: [{ data: {{ chart_values|safe }}, backgroundColor: ['#0d6efd','#198754','#ffc107'] }] },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  </script>
+{% endblock %}

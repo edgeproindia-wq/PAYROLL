@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Income Tax{% endblock %}
+{% block content %}
+  <h1>Income Tax Management</h1>
+
+  <div style="background:#fff; border-radius:8px; padding:20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+    <h3>Filter</h3>
+    <form method="get" style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+      <div style="flex:1; min-width:180px;">
+        <label style="font-size:12px; color:#64748b; display:block; margin-bottom:4px;">Employee</label>
+        <select name="employee_id" style="width:100%; padding:6px;">
+          <option value="">All Employees</option>
+          {% for emp in employees %}
+            <option value="{{ emp.id }}">{{ emp.employee_code }} - {{ emp.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex:1; min-width:150px;">
+        <label style="font-size:12px; color:#64748b; display:block; margin-bottom:4px;">Financial Year</label>
+        <select name="financial_year" style="width:100%; padding:6px;">
+          {% for fy in financial_years %}
+            <option value="{{ fy }}">{{ fy }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <button type="submit" style="background:#0f172a; color:#fff; border:none; padding:8px 18px; border-radius:6px; cursor:pointer;">Apply Filter</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="label">Total Employees</div><div class="value">{{ summary.employee_count|default:"0" }}</div></div>
+    <div class="kpi-card"><div class="label">Total Taxable Income</div><div class="value">{{ summary.total_taxable_income|default:"0" }}</div></div>
+    <div class="kpi-card"><div class="label">Total Tax Collected</div><div class="value">{{ summary.total_tax|default:"0" }}</div></div>
+    <div class="kpi-card"><div class="label">Pending Declarations</div><div class="value">{{ summary.pending_declarations|default:"0" }}</div></div>
+  </div>
+
+  <h3>Income Tax Detail</h3>
+  <table>
+    <tr>
+      <th>Employee Code</th><th>Name</th><th>PAN</th><th>Tax Regime</th>
+      <th>Gross Income</th><th>Declared Investments</th><th>Taxable Income</th><th>Annual Tax</th>
+    </tr>
+    {% for row in income_tax_records %}
+    <tr>
+      <td>{{ row.employee_code }}</td>
+      <td>{{ row.employee_name }}</td>
+      <td>{{ row.pan_number }}</td>
+      <td>{{ row.tax_regime }}</td>
+      <td>{{ row.gross_income }}</td>
+      <td>{{ row.declared_investments }}</td>
+      <td>{{ row.taxable_income }}</td>
+      <td><strong>{{ row.annual_tax }}</strong></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8">No income tax records found.</td></tr>
+    {% endfor %}
+  </table>
+{% endblock %}

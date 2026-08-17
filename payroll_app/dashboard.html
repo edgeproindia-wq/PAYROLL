@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+  <h1>Dashboard</h1>
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="label">Total Employees</div><div class="value">248</div></div>
+    <div class="kpi-card"><div class="label">Payroll Processed</div><div class="value">Rs. 1.25 Cr</div></div>
+    <div class="kpi-card"><div class="label">Pending Payroll</div><div class="value">12</div></div>
+    <div class="kpi-card"><div class="label">Employees on Leave</div><div class="value">18</div></div>
+  </div>
+  <div>
+  <p>Salary Generated</p>
+  <p>{{ salary_generated_count }}</p>
+</div>
+{% endblock %}

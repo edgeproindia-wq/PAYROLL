@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Statutory Compliance{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Statutory Compliance</h1>
+  <div class="card shadow-sm border-0 p-4">
+    <h3>Contribution Details</h3>
+    <table class="table table-hover align-middle">
+      <tr><th>Employee</th><th>Basic</th><th>Gross</th><th>PF (12%)</th><th>ESI (0.75%)</th></tr>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.employee.full_name }}</td>
+        <td>{{ r.basic }}</td>
+        <td>{{ r.gross }}</td>
+        <td>{{ r.pf }}</td>
+        <td>{{ r.esi }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No salary structures set yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="chart-card card shadow-sm border-0 p-4 mb-4">
+    <h3>PF vs ESI by Employee</h3>
+    <canvas id="scChart"></canvas>
+  </div>
+  <script>
+    new Chart(document.getElementById('scChart'), {
+      type: 'bar',
+      data: { labels: {{ chart_labels|safe }}, datasets: [
+        { label: 'PF', data: {{ chart_pf|safe }}, backgroundColor: '#0d6efd' },
+        { label: 'ESI', data: {{ chart_esi|safe }}, backgroundColor: '#198754' }
+      ]},
+      options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+    });
+  </script>
+{% endblock %}

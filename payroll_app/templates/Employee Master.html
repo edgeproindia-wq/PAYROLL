@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Employee Master{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Employee Master</h1>
+
+  <div class="card shadow-sm border-0 p-4 mb-4">
+    <h3>{% if edit_employee %}Edit Employee{% else %}Add New Employee{% endif %}</h3>
+    <form method="post" action="{% if edit_employee %}{% url 'employee_edit' edit_employee.id %}{% else %}{% url 'employee_master' %}{% endif %}">
+      {% csrf_token %}
+      <div class="row g-3">
+        {% if not edit_employee %}
+        <div class="col-md-3">
+          <label class="form-label">Employee Code Prefix</label>
+          <input type="text" name="code_prefix" value="EPRO" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Employee Number</label>
+          <select name="employee_code" class="form-select">
+            {% for n in number_options %}
+              <option value="{{ n }}">{{ n }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        {% for field in form %}
+        <div class="col-md-3">
+          <label class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|striptags }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn btn-primary mt-3">{% if edit_employee %}Save Changes{% else %}Add Employee{% endif %}</button>
+      {% if edit_employee %}<a href="{% url 'employee_master' %}" class="btn btn-outline-secondary mt-3">Cancel</a>{% endif %}
+    </form>
+  </div>
+
+  <div class="card shadow-sm border-0 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 class="mb-0">All Employees</h3>
+      <div class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0 small">Show</label>
+        <select class="form-select form-select-sm" style="width:auto;" onchange="window.location.href='?page_size='+this.value">
+          <option value="1" {% if page_size == 1 %}selected{% endif %}>1</option>
+          <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+          <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+          <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+          <option value="200" {% if page_size == 200 %}selected{% endif %}>200</option>
+          <option value="500" {% if page_size == 500 %}selected{% endif %}>500</option>
+        </select>
+        <a href="{% url 'master_data_upload' %}" class="btn btn-outline-primary btn-sm">Upload Master Data</a>
+        <a href="{% url 'employee_master_export_csv' %}" class="btn btn-outline-secondary btn-sm">Export CSV</a>
+      </div>
+    </div>
+    <table class="table table-hover align-middle">
+      <tr><th>Code</th><th>Name</th><th>Department</th><th>Designation</th><th>Status</th><th>Phone</th><th>Actions</th></tr>
+      {% for e in employees %}
+      <tr>
+        <td>{{ e.employee_code }}</td>
+        <td>{{ e.full_name }}</td>
+        <td>{{ e.department }}</td>
+        <td>{{ e.designation }}</td>
+        <td><span class="badge badge-{{ e.employment_status|lower }}">{{ e.get_employment_status_display }}</span></td>
+        <td>{{ e.phone }}</td>
+        <td>
+          <a href="{% url 'employee_edit' e.id %}" class="btn btn-outline-secondary btn-sm">Edit</a>
+          <a href="{% url 'employee_delete' e.id %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Delete this employee?');">Delete</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7">No employees yet.</td></tr>
+      {% endfor %}
+    </table>
+
+    {% if employees.has_other_pages %}
+    <nav class="mt-3">
+      <ul class="pagination pagination-sm mb-0">
+        {% if employees.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ employees.previous_page_number }}">Previous</a></li>
+        {% endif %}
+        {% for num in employees.paginator.page_range %}
+        <li class="page-item {% if employees.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+        {% endfor %}
+        {% if employees.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ employees.next_page_number }}">Next</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+  </div>
+{% endblock %}

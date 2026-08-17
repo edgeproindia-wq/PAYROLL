@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}User Roles and Permissions{% endblock %}
+{% block content %}
+  <h1 class="mb-4">User Roles and Permissions</h1>
+  <div class="card shadow-sm border-0 p-4 mb-4">
+    <h3>Assign Role</h3>
+    <form method="post">
+      {% csrf_token %}
+      <div class="row g-3">
+        {% for field in form %}
+        <div class="col-md-3">
+          <label class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|striptags }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn btn-primary mt-3">Save</button>
+    </form>
+  </div>
+  <div class="card shadow-sm border-0 p-4">
+    <h3>Role Assignments</h3>
+    <table class="table table-hover align-middle">
+      <tr><th>Employee</th><th>Role</th><th>Assigned On</th></tr>
+      {% for a in assignments %}
+      <tr>
+        <td>{{ a.employee.full_name }}</td>
+        <td>{{ a.get_role_display }}</td>
+        <td>{{ a.assigned_on }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3">No role assignments yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endblock %}

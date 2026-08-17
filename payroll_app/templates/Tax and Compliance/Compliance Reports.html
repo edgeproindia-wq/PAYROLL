@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Compliance Reports{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Compliance Reports</h1>
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Employees</div>
+        <div class="value">{{ employee_count }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Total PF</div>
+        <div class="value">{{ total_pf }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Total ESI</div>
+        <div class="value">{{ total_esi }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 kpi-card">
+        <div class="label">Total Gross</div>
+        <div class="value">{{ total_gross }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="chart-card card shadow-sm border-0 p-4">
+    <h3>Overview</h3>
+    <canvas id="crChart"></canvas>
+  </div>
+  <script>
+    new Chart(document.getElementById('crChart'), {
+      type: 'bar',
+      data: { labels: {{ chart_labels|safe }}, datasets: [{ data: {{ chart_values|safe }}, backgroundColor: ['#0d6efd','#198754','#ffc107'] }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+  </script>
+{% endblock %}
