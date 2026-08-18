@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{% block title %}Payroll Management{% endblock %}</title>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; font-family: Arial, sans-serif; display:flex; background:#f4f6f9; }
+  .sidebar { width:230px; background:#0f172a; color:#fff; height:100vh; overflow-y:auto; padding:15px; position:fixed; }
+  .sidebar h2 { font-size:16px; border-bottom:1px solid #334155; padding-bottom:10px; }
+  .sidebar a { display:block; color:#cbd5e1; text-decoration:none; padding:6px 8px; font-size:13px; border-radius:4px; }
+  .sidebar a:hover, .sidebar a.active { background:#1e293b; color:#fff; }
+  .sidebar .group-title { color:#64748b; font-size:11px; text-transform:uppercase; margin:12px 0 4px 8px; }
+  .content { margin-left:230px; padding:30px; flex:1; }
+  .kpi-row { display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+  .kpi-card { background:#fff; border-radius:8px; padding:16px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.08); min-width:180px; flex:1; }
+  .kpi-card .label { color:#64748b; font-size:12px; }
+  .kpi-card .value { font-size:22px; font-weight:bold; color:#0f172a; margin-top:4px; }
+  table { width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; }
+  th, td { text-align:left; padding:10px 14px; font-size:13px; border-bottom:1px solid #eef1f5; }
+  th { background:#f8fafc; color:#64748b; }
+</style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>PAYROLL MANAGEMENT</h2>
+    <a href="{% url 'dashboard' %}">Dashboard</a>
+    <a href="{% url 'employee_master' %}">Employee Master</a>
+    <a href="{% url 'salary_structure' %}">Salary Structure</a>
+    <a href="{% url 'attendance' %}">Attendance</a>
+    <a href="{% url 'leave_management' %}">Leave Management</a>
+    <a href="{% url 'reimbursement' %}">Reimbursement</a>
+
+    <div class="group-title">Payroll</div>
+    <a href="{% url 'payroll_processing' %}">Payroll Processing</a>
+    <a href="{% url 'payroll_preview' %}">Payroll Preview</a>
+    <a href="{% url 'payroll_validation' %}">Payroll Validation</a>
+    <a href="{% url 'payroll_approval' %}">Payroll Approval</a>
+    <a href="{% url 'payroll_release' %}">Payroll Release</a>
+
+    <div class="group-title">Tax &amp; Compliance</div>
+    <a href="{% url 'statutory_compliance' %}">Statutory Compliance</a>
+    <a href="{% url 'income_tax' %}">Income Tax</a>
+    <a href="{% url 'compliance_reports' %}">Compliance Reports</a>
+
+    <div class="group-title">Adjustments</div>
+    <a href="{% url 'arrears' %}">Arrears</a>
+    <a href="{% url 'full_final_settlement' %}">Full &amp; Final Settlement</a>
+
+    <a href="{% url 'payslips' %}">Payslips</a>
+    <a href="{% url 'bank_transfer' %}">Bank Transfer</a>
+    <a href="{% url 'reports_analytics' %}">Reports &amp; Analytics</a>
+    <a href="{% url 'ess' %}">ESS</a>
+    <a href="{% url 'notifications' %}">Notifications</a>
+    <a href="{% url 'user_roles_permissions' %}">User Roles &amp; Permissions</a>
+    <a href="{% url 'settings' %}">Settings</a>
+  </div>
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

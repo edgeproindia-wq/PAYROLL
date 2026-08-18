@@ -1,0 +1,37 @@
+﻿{% extends "base.html" %}
+{% block title %}Payroll Cost  <div style="display:flex; justify-content:space-between; margin-top:20px;">
+    <a href="{% url 'new_joiners_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">&larr; Previous: New Joiners</a>
+    <a href="{% url 'pending_payroll_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">Next: Pending Payroll &rarr;</a>
+  </div>
+{% endblock %}
+{% block content %}
+  <h1>Payroll Cost</h1>
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="label">Total Monthly Cost (All Departments)</div><div class="value">{{ overall_total }}</div></div>
+  </div>
+  <div class="chart-card" style="margin-bottom:24px;">
+    <h3 style="margin-top:0;">Cost by Department</h3>
+    <canvas id="costChart"></canvas>
+  </div>
+  <script>
+    new Chart(document.getElementById('costChart'), {
+      type: 'bar',
+      data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [{ data: {{ chart_values|safe }}, backgroundColor: '#2563eb', borderRadius: 6 }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+  </script>
+  <h3>Cost by Department (Table)</h3>
+  <table>
+    <tr><th>Department</th><th>Employees</th><th>Total Monthly Cost</th></tr>
+    {% for row in dept_costs %}
+    <tr><td>{{ row.department }}</td><td>{{ row.employee_count }}</td><td><strong>{{ row.total_cost }}</strong></td></tr>
+    {% empty %}<tr><td colspan="3">No cost data available.</td></tr>{% endfor %}
+  </table>
+  <div style="display:flex; justify-content:space-between; margin-top:20px;">
+    <a href="{% url 'new_joiners_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">&larr; Previous: New Joiners</a>
+    <a href="{% url 'pending_payroll_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">Next: Pending Payroll &rarr;</a>
+  </div>
+{% endblock %}

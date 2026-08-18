@@ -1,0 +1,21 @@
+﻿{% extends "base.html" %}
+{% block title %}Payroll Run Detail{% endblock %}
+{% block content %}
+  <h1>{{ run.month }} - {{ run.get_status_display }}</h1>
+  <p style="color:#64748b; margin-bottom:16px;"><a href="{% url 'payroll_combined' %}" style="color:#2563eb; text-decoration:none;">&larr; Back to Payroll</a></p>
+  <a href="{% url 'payroll_run_download_docx' run.id %}" style="display:inline-block; margin-bottom:16px; background:#2563eb; color:#fff; text-decoration:none; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600;">Download as Word Document</a>
+  <table>
+    <tr><th>Employee Code</th><th>Name</th><th>Basic</th><th>Gross Salary</th><th>Net Pay</th></tr>
+    {% for line in lines %}
+    <tr>
+      <td>{{ line.employee.employee_code }}</td>
+      <td>{{ line.employee.full_name }}</td>
+      <td>{{ line.basic }}</td>
+      <td>{{ line.gross_salary }}</td>
+      <td><strong>{{ line.net_pay }}</strong></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">No employee lines for this run.</td></tr>
+    {% endfor %}
+  </table>
+{% endblock %}

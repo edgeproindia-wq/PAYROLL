@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+  <h1>Dashboard</h1>
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="label">Total Employees</div><div class="value">248</div></div>
+    <div class="kpi-card"><div class="label">Payroll Processed</div><div class="value">Rs. 1.25 Cr</div></div>
+    <div class="kpi-card"><div class="label">Pending Payroll</div><div class="value">12</div></div>
+    <div class="kpi-card"><div class="label">Employees on Leave</div><div class="value">18</div></div>
+  </div>
+  <h3>Recent Activities</h3>
+  <table>
+    <tr><th>Activity</th><th>Details</th><th>Time</th><th>Status</th></tr>
+    <tr><td>Payroll for Jul 2026</td><td>Processed successfully</td><td>Today, 10:30 AM</td><td>Completed</td></tr>
+    <tr><td>Leave Request by Rahul Sharma</td><td>Pending approval</td><td>Today, 09:15 AM</td><td>Pending</td></tr>
+    <tr><td>Reimbursement by Priya Mehta</td><td>Approved</td><td>Yesterday, 04:20 PM</td><td>Approved</td></tr>
+  </table>
+{% endblock %}

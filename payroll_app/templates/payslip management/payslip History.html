@@ -1,0 +1,16 @@
+﻿{% extends "base.html" %}
+{% block title %}Payslip History{% endblock %}
+{% block content %}
+  <h1>Payslip History</h1>
+  <table>
+    <tr><th>Month</th><th>Employee Code</th><th>Name</th><th>Basic</th><th>Gross</th><th>Net Pay</th></tr>
+    {% for line in lines %}
+    <tr><td>{{ line.payroll_run.month }}</td><td>{{ line.employee.employee_code }}</td><td>{{ line.employee.full_name }}</td><td>{{ line.basic }}</td><td>{{ line.gross_salary }}</td><td><strong>{{ line.net_pay }}</strong></td></tr>
+    {% empty %}<tr><td colspan="6">No payslip history yet.</td></tr>{% endfor %}
+  </table>
+  <div style="display:flex; justify-content:center; gap:12px; margin-top:16px;">
+    {% if lines.has_previous %}<a href="?page={{ lines.previous_page_number }}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">Previous</a>{% endif %}
+    <span style="padding:8px 12px; font-size:13px; color:#64748b;">Page {{ lines.number }} of {{ lines.paginator.num_pages }}</span>
+    {% if lines.has_next %}<a href="?page={{ lines.next_page_number }}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">Next</a>{% endif %}
+  </div>
+{% endblock %}

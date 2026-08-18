@@ -1,0 +1,20 @@
+﻿{% extends "base.html" %}
+{% block title %}New Joiners  <div style="display:flex; justify-content:space-between; margin-top:20px;">
+    <a href="{% url 'total_employees_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">&larr; Previous: Total Employees</a>
+    <a href="{% url 'payroll_cost_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">Next: Payroll Cost &rarr;</a>
+  </div>
+{% endblock %}
+{% block content %}
+  <h1>New Joiners</h1>
+  <p style="color:#64748b;">Employees who joined since {{ cutoff }}.</p>
+  <table>
+    <tr><th>Code</th><th>Name</th><th>Department</th><th>Designation</th><th>Date of Joining</th></tr>
+    {% for emp in employees %}
+    <tr><td>{{ emp.employee_code }}</td><td>{{ emp.full_name }}</td><td>{{ emp.department }}</td><td>{{ emp.designation }}</td><td>{{ emp.date_of_joining }}</td></tr>
+    {% empty %}<tr><td colspan="5">No new joiners in this period.</td></tr>{% endfor %}
+  </table>
+  <div style="display:flex; justify-content:space-between; margin-top:20px;">
+    <a href="{% url 'total_employees_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">&larr; Previous: Total Employees</a>
+    <a href="{% url 'payroll_cost_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">Next: Payroll Cost &rarr;</a>
+  </div>
+{% endblock %}
