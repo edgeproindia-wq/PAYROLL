@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Payment Status{% endblock %}
+{% block content %}
+  <h1>Payment Status</h1>
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="label">Successful</div>
+      <div class="value">{{ success_count }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Pending</div>
+      <div class="value">{{ pending_count }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Failed</div>
+      <div class="value">{{ failed_count }}</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Employee</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Updated On</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in payments %}
+      <tr>
+        <td>{{ p.employee_name }}</td>
+        <td>{{ p.amount }}</td>
+        <td>{{ p.status }}</td>
+        <td>{{ p.updated_on }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4" style="text-align:center; color:#64748b;">No payment records yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

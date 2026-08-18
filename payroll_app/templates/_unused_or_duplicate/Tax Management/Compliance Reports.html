@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Compliance Reports{% endblock %}
+{% block content %}
+  <h1>Compliance Reports</h1>
+
+  <div style="background:#fff; border-radius:8px; padding:20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+    <h3>Filter</h3>
+    <form method="get" style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+      <div style="flex:1; min-width:150px;">
+        <label style="font-size:12px; color:#64748b; display:block; margin-bottom:4px;">Report Type</label>
+        <select name="report_type" style="width:100%; padding:6px;">
+          <option value="PF">PF</option>
+          <option value="ESI">ESI</option>
+          <option value="PT">Professional Tax</option>
+          <option value="TDS">TDS</option>
+        </select>
+      </div>
+      <div style="flex:1; min-width:150px;">
+        <label style="font-size:12px; color:#64748b; display:block; margin-bottom:4px;">Month</label>
+        <input type="month" name="month" style="width:100%; padding:6px;">
+      </div>
+      <div>
+        <button type="submit" style="background:#0f172a; color:#fff; border:none; padding:8px 18px; border-radius:6px; cursor:pointer;">Generate Report</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="label">Total Filings Due</div><div class="value">{{ summary.filings_due|default:"0" }}</div></div>
+    <div class="kpi-card"><div class="label">Filed On Time</div><div class="value">{{ summary.filed_on_time|default:"0" }}</div></div>
+    <div class="kpi-card"><div class="label">Overdue</div><div class="value">{{ summary.overdue|default:"0" }}</div></div>
+  </div>
+
+  <h3>Compliance Report History</h3>
+  <table>
+    <tr><th>Report Type</th><th>Month</th><th>Due Date</th><th>Filed On</th><th>Status</th><th>Action</th></tr>
+    {% for row in compliance_reports %}
+    <tr>
+      <td>{{ row.report_type }}</td>
+      <td>{{ row.month }}</td>
+      <td>{{ row.due_date }}</td>
+      <td>{{ row.filed_on|default:"-" }}</td>
+      <td>{{ row.status }}</td>
+      <td><a href="{{ row.file_url }}">Download</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6">No compliance reports generated yet.</td></tr>
+    {% endfor %}
+  </table>
+{% endblock %}

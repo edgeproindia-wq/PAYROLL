@@ -1,0 +1,19 @@
+"{% extends `"base.html`" %}`n{% block title %}Leave Management{% endblock %}`n{% block content %}`n  <h1>Leave Management</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Leave Management.html" -Encoding UTF8
+"{% extends `"base.html`" %}`n{% block title %}Reimbursement{% endblock %}`n{% block content %}`n  <h1>Reimbursement</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Reimbursement.html" -Encoding UTF8
+"{% extends `"base.html`" %}`n{% block title %}Payslips{% endblock %}`n{% block content %}`n  <h1>Payslips</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Payslips.html" -Encoding UTF8
+"{% extends `"base.html`" %}`n{% block title %}Bank Transfer{% endblock %}`n{% block content %}`n  <h1>Bank Transfer</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Bank Transfer.html" -Encoding UTF8
+"{% extends `"base.html`" %}`n{% block title %}Reports and Analytics{% endblock %}`n{% block content %}`n  <h1>Reports and Analytics</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Reports and Analytics.html" -Encoding UTF8
+"{% extends `"base.html`" %}`n{% block title %}ESS{% endblock %}`n{% block content %}`n  <h1>ESS</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\ESS.html" -Encoding UTF8
+"{% extends `"base.html`" %}`n{% block title %}Notifications{% endblock %}`n{% block content %}`n  <h1>Notifications</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Notifications.html" -Encoding UTF8
+"{% extends `"base.html`" %}`n{% block title %}Settings{% endblock %}`n{% block content %}`n  <h1>Settings</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Settings.html" -Encoding UTF8
+New-Item -ItemType Directory -Path "payroll_app\templates\Payroll" -Force | Out-Null
+"{% extends `"base.html`" %}`n{% block title %}Payroll Processing{% endblock %}`n{% block content %}`n  <h1>Payroll Processing</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Payroll\Payroll Processing.html" -Encoding UTF8
+"{% extends `"base.html`" %}`n{% block title %}Payroll Preview{% endblock %}`n{% block content %}`n  <h1>Payroll Preview</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Payroll\Payroll Preview.html" -Encoding UTF8
+"{% extends `"base.html`" %}`n{% block title %}Payroll Validation{% endblock %}`n{% block content %}`n  <h1>Payroll Validation</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Payroll\Payroll Validation.html" -Encoding UTF8
+"{% extends `"base.html`" %}`n{% block title %}Payroll Approval{% endblock %}`n{% block content %}`n  <h1>Payroll Approval</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Payroll\Payroll Approval.html" -Encoding UTF8
+"{% extends `"base.html`" %}`n{% block title %}Payroll Release{% endblock %}`n{% block content %}`n  <h1>Payroll Release</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Payroll\Payroll Release.html" -Encoding UTF8
+New-Item -ItemType Directory -Path "payroll_app\templates\Tax and Compliance" -Force | Out-Null
+"{% extends `"base.html`" %}`n{% block title %}Statutory Compliance{% endblock %}`n{% block content %}`n  <h1>Statutory Compliance</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Tax and Compliance\Statutory Compliance.html" -Encoding UTF8
+"{% extends `"base.html`" %}`n{% block title %}Income Tax{% endblock %}`n{% block content %}`n  <h1>Income Tax</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Tax and Compliance\Income Tax.html" -Encoding UTF8
+"{% extends `"base.html`" %}`n{% block title %}Compliance Reports{% endblock %}`n{% block content %}`n  <h1>Compliance Reports</h1>`n{% endblock %}" | Set-Content -Path "payroll_app\templates\Tax and Compliance\Compliance Reports.html" -Encoding UTF8
+Write-Host "DONE - all remaining templates created"

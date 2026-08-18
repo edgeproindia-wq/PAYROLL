@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Master Data Upload{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Master Data Upload</h1>
+
+  <div class="card shadow-sm border-0 p-4 mb-4" style="max-width:700px;">
+    <h3>Upload Employee Master Excel File</h3>
+    <p class="text-secondary small">Expected columns (in order): Employee Code, Name, Manager, Location, Department, Team, Designation, Date of Joining, Status, Last Working Day, Remarks. Employees with an existing code are skipped, not duplicated.</p>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="file" name="data_file" accept=".xlsx,.xls" class="form-control mb-3" required>
+      <button type="submit" class="btn btn-primary">Upload and Import</button>
+    </form>
+  </div>
+
+  {% if result %}
+  <div class="card shadow-sm border-0 p-4" style="max-width:700px;">
+    <h3>Import Result</h3>
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <div class="kpi-card p-3 border rounded">
+          <div class="label">Created</div>
+          <div class="value text-success">{{ result.created }}</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="kpi-card p-3 border rounded">
+          <div class="label">Skipped (already exists)</div>
+          <div class="value text-secondary">{{ result.skipped }}</div>
+        </div>
+      </div>
+    </div>
+    {% if result.errors %}
+    <h5 class="text-danger">Issues</h5>
+    <ul class="small">
+      {% for e in result.errors %}
+      <li>{{ e }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <a href="{% url 'employee_master' %}" class="btn btn-outline-secondary btn-sm mt-2">View Employee Master</a>
+  </div>
+  {% endif %}
+{% endblock %}
