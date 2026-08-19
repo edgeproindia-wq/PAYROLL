@@ -223,6 +223,25 @@
   }
 </style>
 {% block extra_head %}{% endblock %}
+<style>
+  @media (max-width:900px){
+    #mainSidebar{ transform:translateX(-100%) !important; transition:transform .25s ease !important; z-index:9999 !important; }
+    #mainSidebar.mobile-open{ transform:translateX(0) !important; }
+    .content{ margin-left:0 !important; }
+  }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    function isMobile(){ return window.innerWidth <= 900; }
+    var sidebar = document.getElementById('mainSidebar');
+    if(sidebar && isMobile() && !sidebar.classList.contains('mobile-open')){
+      sidebar.style.transform = 'translateX(-100%)';
+    }
+    window.addEventListener('resize', function(){
+      if(!isMobile() && sidebar){ sidebar.style.transform = ''; }
+    });
+  });
+</script>
 <link rel="manifest" href="{% static 'manifest.json' %}">
 <meta name="theme-color" content="#0f172a">
 <script>
@@ -304,6 +323,7 @@
   </div>
 </body>
 </html>
+
 
 
 
