@@ -1,20 +1,24 @@
-﻿{% extends "base.html" %}
-{% block title %}New Joiners  <div style="display:flex; justify-content:space-between; margin-top:20px;">
-    <a href="{% url 'total_employees_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">&larr; Previous: Total Employees</a>
-    <a href="{% url 'payroll_cost_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">Next: Payroll Cost &rarr;</a>
-  </div>
-{% endblock %}
+{% extends "base.html" %}
+{% block title %}New Joiners Report{% endblock %}
 {% block content %}
-  <h1>New Joiners</h1>
-  <p style="color:#64748b;">Employees who joined since {{ cutoff }}.</p>
-  <table>
-    <tr><th>Code</th><th>Name</th><th>Department</th><th>Designation</th><th>Date of Joining</th></tr>
-    {% for emp in employees %}
-    <tr><td>{{ emp.employee_code }}</td><td>{{ emp.full_name }}</td><td>{{ emp.department }}</td><td>{{ emp.designation }}</td><td>{{ emp.date_of_joining }}</td></tr>
-    {% empty %}<tr><td colspan="5">No new joiners in this period.</td></tr>{% endfor %}
-  </table>
-  <div style="display:flex; justify-content:space-between; margin-top:20px;">
-    <a href="{% url 'total_employees_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">&larr; Previous: Total Employees</a>
-    <a href="{% url 'payroll_cost_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">Next: Payroll Cost &rarr;</a>
+<div class="breadcrumb no-print"><a href="{% url 'reports_analytics' %}">Reports &amp; Analytics</a> / New Joiners</div>
+<div class="page-header">
+  <div><h1 class="page-title">New Joiners</h1><p class="page-subtitle">Employees who joined in the last 90 days (since {{ cutoff }})</p></div>
+  <div class="page-actions no-print"><button onclick="window.print()" class="btn btn-outline">&#128424; Print</button></div>
+</div>
+<div class="card">
+  <div class="table-wrap">
+    {% if employees %}
+    <table><thead><tr><th>Employee</th><th>Code</th><th>Department</th><th>Designation</th><th>Date of Joining</th></tr></thead>
+    <tbody>
+      {% for e in employees %}
+      <tr>
+        <td><span class="cell-main"><span class="avatar-sm">{{ e.first_name|first }}{{ e.last_name|first }}</span><span class="cell-title">{{ e.full_name }}</span></span></td>
+        <td>{{ e.employee_code }}</td><td>{{ e.department }}</td><td>{{ e.designation }}</td><td>{{ e.date_of_joining }}</td>
+      </tr>
+      {% endfor %}
+    </tbody></table>
+    {% else %}<div class="empty-state"><div class="icon">&#127881;</div><div class="title">No new joiners in the last 90 days</div></div>{% endif %}
   </div>
+</div>
 {% endblock %}

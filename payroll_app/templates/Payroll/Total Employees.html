@@ -1,35 +1,40 @@
 ﻿{% extends "base.html" %}
-{% block title %}Total Employees  <div style="display:flex; justify-content:flex-end; margin-top:20px;">
-    <a href="{% url 'new_joiners_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">Next: New Joiners &rarr;</a>
-  </div>
-{% endblock %}
+{% block title %}Total Employees Report{% endblock %}
+{% block extra_head %}<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>{% endblock %}
 {% block content %}
-  <h1>Total Employees</h1>
-  <div class="kpi-row">
-    <div class="kpi-card"><div class="label">Total Employees</div><div class="value">{{ total }}</div></div>
-    <div class="kpi-card c2"><div class="label">Active</div><div class="value">{{ active }}</div></div>
-    <div class="kpi-card c3"><div class="label">On Leave</div><div class="value">{{ on_leave }}</div></div>
-    <div class="kpi-card c4"><div class="label">Resigned</div><div class="value">{{ resigned }}</div></div>
+<div class="breadcrumb no-print"><a href="{% url 'reports_analytics' %}">Reports &amp; Analytics</a> / Total Employees</div>
+<div class="page-header">
+  <div><h1 class="page-title">Total Employees Report</h1><p class="page-subtitle">Headcount split by department and status</p></div>
+  <div class="page-actions no-print"><button onclick="window.print()" class="btn btn-outline">&#128424; Print</button></div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi-card"><div class="label">Total</div><div class="value">{{ total }}</div></div>
+  <div class="kpi-card"><div class="label">Active</div><div class="value">{{ active }}</div></div>
+  <div class="kpi-card"><div class="label">On Leave</div><div class="value">{{ on_leave }}</div></div>
+  <div class="kpi-card"><div class="label">Resigned</div><div class="value">{{ resigned }}</div></div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h3>Headcount by Department</h3></div>
+  <div class="card-body"><div class="chart-box"><canvas id="deptChart"></canvas></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h3>Department Summary</h3></div>
+  <div class="table-wrap">
+    {% if dept_summary %}
+    <table><thead><tr><th>Department</th><th>Total</th><th>Active</th></tr></thead>
+    <tbody>{% for d in dept_summary %}<tr><td class="cell-title">{{ d.department }}</td><td>{{ d.total }}</td><td>{{ d.active }}</td></tr>{% endfor %}</tbody></table>
+    {% else %}<div class="empty-state"><div class="icon">&#128101;</div><div class="title">No department data</div></div>{% endif %}
   </div>
-  <div class="chart-card" style="margin-bottom:24px;">
-    <h3 style="margin-top:0;">Headcount by Department</h3>
-    <canvas id="empChart"></canvas>
-  </div>
-  <script>
-    new Chart(document.getElementById('empChart'), {
-      type: 'bar',
-      data: { labels: {{ chart_labels|safe }}, datasets: [{ data: {{ chart_values|safe }}, backgroundColor: '#16a34a', borderRadius: 6 }] },
-      options: { responsive: true, plugins: { legend: { display: false } } }
-    });
-  </script>
-  <h3>By Department (Table)</h3>
-  <table>
-    <tr><th>Department</th><th>Total</th><th>Active</th></tr>
-    {% for row in dept_summary %}
-    <tr><td>{{ row.department }}</td><td>{{ row.total }}</td><td>{{ row.active }}</td></tr>
-    {% empty %}<tr><td colspan="3">No departments found.</td></tr>{% endfor %}
-  </table>
-  <div style="display:flex; justify-content:flex-end; margin-top:20px;">
-    <a href="{% url 'new_joiners_report' %}" style="background:#0f172a; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-size:13px;">Next: New Joiners &rarr;</a>
-  </div>
+</div>
+<script>
+  new Chart(document.getElementById('deptChart'), {
+    type:'bar',
+    data:{ labels:{{ chart_labels|safe }}, datasets:[{ label:'Employees', data:{{ chart_values|safe }}, backgroundColor:'#4f46e5', borderRadius:6 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true, grid:{color:'#eef1f6'}}, x:{grid:{display:false}} } }
+  });
+</script>
 {% endblock %}
+

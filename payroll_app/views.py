@@ -3,7 +3,9 @@ from django.contrib import messages
 from decimal import Decimal
 from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement
 from .forms import EmployeeForm, SalaryStructureForm, AttendanceForm, LeaveRequestForm, ReimbursementForm, PayrollRunForm
-from .models import PayrollRun, PayrollRunLine
+from .models import PayrollRun, PayrollRunLine, InvestmentDeclaration
+import csv
+from django.http import HttpResponse
 
 
 def generic_page(request, template_path):
@@ -25,6 +27,16 @@ def dashboard(request):
     run_labels = json.dumps([run_status_map.get(r['status'], r['status']) for r in run_status_data])
     run_values = json.dumps([r['c'] for r in run_status_data])
     salary_generated_count = PayrollRun.objects.filter(lines__isnull=False).distinct().count()
+    latest_payroll_run = PayrollRun.objects.first()
+    latest_run_net_pay = 0
+    latest_run_employee_count = 0
+    if latest_payroll_run:
+        run_lines = latest_payroll_run.lines.all()
+        latest_run_net_pay = sum(l.net_pay for l in run_lines)
+        latest_run_employee_count = run_lines.count()
+    pending_investment_declarations = InvestmentDeclaration.objects.filter(is_verified=False).count()
+    recent_leaves = LeaveRequest.objects.select_related('employee').order_by('-id')[:5]
+    recent_reimbursements = Reimbursement.objects.select_related('employee').order_by('-id')[:5]
     context = {
         'dept_labels': dept_labels,
         'dept_values': dept_values,
@@ -37,14 +49,15 @@ def dashboard(request):
         'salary_generated_count': salary_generated_count,
         'pending_leave': LeaveRequest.objects.filter(status='PENDING').count(),
         'pending_reimbursements': Reimbursement.objects.filter(status='PENDING').count(),
-        'latest_payroll_run': PayrollRun.objects.first(),
+        'latest_payroll_run': latest_payroll_run,
+        'latest_run_net_pay': latest_run_net_pay,
+        'latest_run_employee_count': latest_run_employee_count,
+        'pending_investment_declarations': pending_investment_declarations,
         'pending_approvals': PayrollRun.objects.filter(status='VALIDATED').count(),
+        'recent_leaves': recent_leaves,
+        'recent_reimbursements': recent_reimbursements,
     }
     return render(request, 'Dashboard.html', context)
-
-
-import csv
-from django.http import HttpResponse
 
 
 def employee_master_export_csv(request):
@@ -59,12 +72,12 @@ def employee_master_export_csv(request):
 
 def employee_master(request):
     from django.core.paginator import Paginator
-    last_employee = Employee.objects.order_by('-id').first()
-    next_number = 1
-    if last_employee and last_employee.employee_code:
-        digits = ''.join(filter(str.isdigit, last_employee.employee_code))
+    max_number = 0
+    for code in Employee.objects.values_list('employee_code', flat=True):
+        digits = ''.join(filter(str.isdigit, code or ''))
         if digits:
-            next_number = int(digits) + 1
+            max_number = max(max_number, int(digits))
+    next_number = max_number + 1
     number_options = [str(n).zfill(3) for n in range(next_number, next_number + 20)]
     if request.method == 'POST':
         post_data = request.POST.copy()
@@ -79,10 +92,10 @@ def employee_master(request):
         form = EmployeeForm()
     all_employees = Employee.objects.all()
     existing_codes = Employee.objects.values_list('employee_code', flat=True).order_by('employee_code')
-    paginator = Paginator(all_employees, 10)
+    paginator = Paginator(all_employees, 50)
     page_number = request.GET.get('page')
     employees = paginator.get_page(page_number)
-    return render(request, 'Employee Master.html', {'employees': employees, 'form': form, 'existing_codes': existing_codes})
+    return render(request, 'Employee Master.html', {'employees': employees, 'form': form, 'existing_codes': existing_codes, 'number_options': number_options})
 
 
 def employee_edit(request, pk):
@@ -185,10 +198,6 @@ def reimbursement(request):
     reimbursements = paginator.get_page(page_number)
     return render(request, 'Reimbursement.html', {'form': form, 'reimbursements': reimbursements})
 
-
-def payslips(request):
-    lines = PayrollRunLine.objects.select_related('employee', 'payroll_run').filter(payroll_run__status='RELEASED')
-    return render(request, 'Payslips.html', {'lines': lines})
 
 def statutory_compliance(request):
     import json
@@ -306,7 +315,6 @@ def employees_on_leave_report(request):
 
 def payroll_run_download_docx(request, pk):
     from docx import Document
-    from django.http import HttpResponse
     run = get_object_or_404(PayrollRun, pk=pk)
     lines = run.lines.select_related('employee').all()
     doc = Document()
@@ -556,9 +564,6 @@ def salary_transfer_file(request):
     return render(request, 'Bank Transfer.html')
 
 
-import csv
-from django.http import HttpResponse
-
 def payslips_export_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="payslips.csv"'
@@ -567,7 +572,7 @@ def payslips_export_csv(request):
     lines = PayrollRunLine.objects.filter(payroll_run__status='RELEASED').select_related('employee', 'payroll_run')
     for line in lines:
         writer.writerow([
-            line.payroll_run.month, line.employee.employee_code, line.employee.name,
+            line.payroll_run.month, line.employee.employee_code, line.employee.full_name,
             line.basic, line.gross_salary, line.net_pay,
         ])
     return response
@@ -586,7 +591,7 @@ def payslips_export_excel(request):
     lines = PayrollRunLine.objects.filter(payroll_run__status='RELEASED').select_related('employee', 'payroll_run')
     for line in lines:
         ws.append([
-            line.payroll_run.month, line.employee.employee_code, line.employee.name,
+            line.payroll_run.month, line.employee.employee_code, line.employee.full_name,
             float(line.basic), float(line.gross_salary), float(line.net_pay),
         ])
 
@@ -597,17 +602,32 @@ def payslips_export_excel(request):
     response['Content-Disposition'] = 'attachment; filename="payslips.xlsx"'
     wb.save(response)
     return response
-ll_run')
+
+
+
+def payroll_run_download_excel(request, pk):
+    import openpyxl
+    from openpyxl.utils import get_column_letter
+    run = get_object_or_404(PayrollRun, pk=pk)
+    lines = run.lines.select_related('employee').all()
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Payroll Report'
+    ws.append([f'Payroll Report - {run.month}'])
+    ws.append([f'Status: {run.get_status_display()}'])
+    ws.append([f'Created: {run.created_at.strftime("%d %b %Y")}'])
+    ws.append([])
+    headers = ['Employee Code', 'Name', 'Basic', 'Gross Salary', 'Net Pay']
+    ws.append(headers)
     for line in lines:
         ws.append([
-            line.payroll_run.month, line.employee.employee_code, line.employee.name,
+            line.employee.employee_code, line.employee.full_name,
             float(line.basic), float(line.gross_salary), float(line.net_pay),
         ])
-
     for i, header in enumerate(headers, 1):
-        ws.column_dimensions[get_column_letter(i)].width = max(14, len(header) + 4)
-
+        ws.column_dimensions[get_column_letter(i)].width = max(16, len(header) + 4)
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="payslips.xlsx"'
+    response['Content-Disposition'] = f'attachment; filename="Payroll_{run.month}.xlsx"'
     wb.save(response)
     return response
+
