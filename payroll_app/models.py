@@ -265,3 +265,28 @@ class InvestmentDeclaration(models.Model):
         return f"{self.employee} - {self.financial_year} - {self.section}"
 
 
+
+
+class OnboardingChecklist(models.Model):
+    employee = models.OneToOneField(Employee, on_delete=models.CASCADE, related_name="onboarding")
+    offer_letter_signed = models.BooleanField(default=False)
+    documents_collected = models.BooleanField(default=False)
+    bank_details_verified = models.BooleanField(default=False)
+    it_equipment_assigned = models.BooleanField(default=False)
+    orientation_scheduled = models.BooleanField(default=False)
+    is_offboarding = models.BooleanField(default=False, help_text="Check if this is an offboarding checklist instead of onboarding")
+    exit_interview_done = models.BooleanField(default=False)
+    assets_returned = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def completion_percent(self):
+        if self.is_offboarding:
+            fields = [self.exit_interview_done, self.assets_returned, self.documents_collected]
+        else:
+            fields = [self.offer_letter_signed, self.documents_collected, self.bank_details_verified, self.it_equipment_assigned, self.orientation_scheduled]
+        done = sum(1 for f in fields if f)
+        return int((done / len(fields)) * 100) if fields else 0
+
+    def __str__(self):
+        return f"{'Offboarding' if self.is_offboarding else 'Onboarding'} - {self.employee.full_name}"

@@ -9,12 +9,10 @@ import csv
 from django.http import HttpResponse
 
 
-@login_required
 def generic_page(request, template_path):
     return render(request, f'{template_path}.html')
 
 
-@login_required
 def dashboard(request):
     from django.db.models import Count
     import json
@@ -63,7 +61,6 @@ def dashboard(request):
     return render(request, 'Dashboard.html', context)
 
 
-@login_required
 def employee_master_export_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="employees.csv"'
@@ -74,7 +71,6 @@ def employee_master_export_csv(request):
     return response
 
 
-@login_required
 def employee_master_import_xlsx(request):
     import openpyxl
     from datetime import date
@@ -157,7 +153,6 @@ def employee_master_import_xlsx(request):
     return redirect('employee_master')
 
 
-@login_required
 def employee_master(request):
     from django.core.paginator import Paginator
     max_number = 0
@@ -186,7 +181,6 @@ def employee_master(request):
     return render(request, 'Employee Master.html', {'employees': employees, 'form': form, 'existing_codes': existing_codes, 'number_options': number_options})
 
 
-@login_required
 def employee_edit(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == 'POST':
@@ -201,14 +195,12 @@ def employee_edit(request, pk):
     })
 
 
-@login_required
 def employee_delete(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     employee.delete()
     return redirect('employee_master')
 
 
-@login_required
 def salary_structure(request):
     import json
     if request.method == 'POST':
@@ -230,7 +222,6 @@ def salary_structure(request):
     return render(request, 'Salary Structure.html', {'form': form, 'structures': structures, 'chart_labels': chart_labels, 'chart_basic': chart_basic, 'chart_hra': chart_hra})
 
 
-@login_required
 def attendance(request):
     import json
     if request.method == 'POST':
@@ -253,7 +244,6 @@ def attendance(request):
     return render(request, 'Attendance.html', {'form': form, 'records': records, 'chart_labels': chart_labels, 'chart_values': chart_values})
 
 
-@login_required
 def leave_management(request):
     import json
     if request.method == 'POST':
@@ -276,7 +266,6 @@ def leave_management(request):
     return render(request, 'Leave Management.html', {'form': form, 'leave_requests': leave_requests, 'chart_labels': chart_labels, 'chart_values': chart_values})
 
 
-@login_required
 def reimbursement(request):
     if request.method == 'POST':
         form = ReimbursementForm(request.POST)
@@ -293,7 +282,6 @@ def reimbursement(request):
     return render(request, 'Reimbursement.html', {'form': form, 'reimbursements': reimbursements})
 
 
-@login_required
 def statutory_compliance(request):
     import json
     rows = []
@@ -307,7 +295,6 @@ def statutory_compliance(request):
     return render(request, 'Tax and Compliance/Statutory Compliance.html', {'rows': rows, 'chart_labels': chart_labels, 'chart_pf': chart_pf, 'chart_esi': chart_esi})
 
 
-@login_required
 def investment_declaration(request):
     from .models import InvestmentDeclaration
     from .forms import InvestmentDeclarationForm
@@ -322,7 +309,6 @@ def investment_declaration(request):
     return render(request, 'Income Tax Management/Investment declartion.html', {'form': form, 'declarations': declarations})
 
 
-@login_required
 def income_tax(request):
     import json
     rows = []
@@ -340,7 +326,6 @@ def income_tax(request):
     return render(request, 'Tax and Compliance/Income Tax.html', {'rows': rows, 'chart_labels': chart_labels, 'chart_values': chart_values})
 
 
-@login_required
 def compliance_reports(request):
     import json
     structures = SalaryStructure.objects.all()
@@ -355,7 +340,6 @@ def compliance_reports(request):
     })
 
 
-@login_required
 def total_employees_report(request):
     import json
     from django.db.models import Count, Q
@@ -379,7 +363,6 @@ def total_employees_report(request):
     return render(request, 'Payroll/Total Employees.html', context)
 
 
-@login_required
 def new_joiners_report(request):
     from datetime import date, timedelta
     cutoff = date.today() - timedelta(days=90)
@@ -387,7 +370,6 @@ def new_joiners_report(request):
     return render(request, 'Payroll/New Joiners.html', {'employees': employees, 'cutoff': cutoff})
 
 
-@login_required
 def payroll_cost_report(request):
     import json
     from django.db.models import Sum, Count, F
@@ -402,13 +384,11 @@ def payroll_cost_report(request):
     return render(request, 'Payroll/Payroll Cost.html', {'dept_costs': dept_costs, 'overall_total': overall_total, 'chart_labels': chart_labels, 'chart_values': chart_values})
 
 
-@login_required
 def pending_payroll_report(request):
     pending_runs = PayrollRun.objects.exclude(status='RELEASED').prefetch_related('lines')
     return render(request, 'Payroll/Pending Payroll.html', {'pending_runs': pending_runs})
 
 
-@login_required
 def employees_on_leave_report(request):
     from datetime import date
     today = date.today()
@@ -416,7 +396,6 @@ def employees_on_leave_report(request):
     return render(request, 'Payroll/Employees On Leave.html', {'on_leave': on_leave, 'today': today})
 
 
-@login_required
 def payroll_run_download_docx(request, pk):
     from docx import Document
     run = get_object_or_404(PayrollRun, pk=pk)
@@ -446,14 +425,12 @@ def payroll_run_download_docx(request, pk):
     return response
 
 
-@login_required
 def payroll_run_detail(request, pk):
     run = get_object_or_404(PayrollRun, pk=pk)
     lines = run.lines.select_related('employee').all()
     return render(request, 'Payroll/Payroll Run Detail.html', {'run': run, 'lines': lines})
 
 
-@login_required
 def payroll_combined(request):
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -528,7 +505,6 @@ def payroll_combined(request):
     return render(request, 'Payroll/Payroll Combined.html', {'form': form, 'payroll_runs': payroll_runs, 'summary': summary})
 
 
-@login_required
 def arrears(request):
     from .models import ArrearsRecord
     from .forms import ArrearsForm
@@ -543,7 +519,6 @@ def arrears(request):
     return render(request, 'Adjustments/Arrears.html', {'form': form, 'records': records})
 
 
-@login_required
 def full_final_settlement(request):
     from .models import FullFinalSettlement
     from .forms import FullFinalSettlementForm
@@ -558,19 +533,16 @@ def full_final_settlement(request):
     return render(request, 'Adjustments/Full and Final Settlement.html', {'form': form, 'records': records})
 
 
-@login_required
 def payslips(request):
     lines = PayrollRunLine.objects.select_related('employee', 'payroll_run').filter(payroll_run__status='RELEASED')
     return render(request, 'Payslips.html', {'lines': lines})
 
 
-@login_required
 def bank_transfer(request):
     lines = PayrollRunLine.objects.select_related('employee', 'payroll_run').filter(payroll_run__status='RELEASED')
     return render(request, 'Bank Transfer.html', {'lines': lines})
 
 
-@login_required
 def reports_analytics(request):
     import json
     context = {
@@ -586,7 +558,6 @@ def reports_analytics(request):
     return render(request, 'Reports and Analytics.html', context)
 
 
-@login_required
 def ess(request):
     context = {
         'total_payslips': PayrollRunLine.objects.filter(payroll_run__status='RELEASED').count(),
@@ -596,7 +567,6 @@ def ess(request):
     return render(request, 'ESS.html', context)
 
 
-@login_required
 def notifications(request):
     from datetime import date, timedelta
     recent_cutoff = date.today() - timedelta(days=30)
@@ -611,7 +581,6 @@ def notifications(request):
     return render(request, 'Notifications.html', {'notices': notices})
 
 
-@login_required
 def user_roles_permissions(request):
     from .models import UserRoleAssignment
     from .forms import UserRoleAssignmentForm
@@ -626,7 +595,6 @@ def user_roles_permissions(request):
     return render(request, 'User Roles and Permissions.html', {'form': form, 'assignments': assignments})
 
 
-@login_required
 def settings(request):
     from .models import CompanySettings
     from .forms import CompanySettingsForm
@@ -641,7 +609,6 @@ def settings(request):
     return render(request, 'Settings.html', {'form': form})
 
 
-@login_required
 def payslip_history(request):
     from django.core.paginator import Paginator
     all_lines = PayrollRunLine.objects.select_related('employee', 'payroll_run').filter(payroll_run__status='RELEASED').order_by('-payroll_run__created_at')
@@ -651,13 +618,11 @@ def payslip_history(request):
     return render(request, 'payslip management/payslip History.html', {'lines': lines})
 
 
-@login_required
 def download_pdf(request):
     lines = PayrollRunLine.objects.select_related('employee', 'payroll_run').filter(payroll_run__status='RELEASED')
     return render(request, 'payslip management/Download PDF.html', {'lines': lines})
 
 
-@login_required
 def _generate_payslip_pdf(line):
     from reportlab.lib.pagesizes import A4
     from reportlab.pdfgen import canvas
@@ -679,7 +644,6 @@ def _generate_payslip_pdf(line):
     return buf.read()
 
 
-@login_required
 def email_payslip(request):
     from django.core.mail import EmailMessage
     lines = PayrollRunLine.objects.select_related('employee', 'payroll_run').filter(payroll_run__status='RELEASED')
@@ -709,27 +673,22 @@ def email_payslip(request):
     return render(request, 'payslip management/Email payslip.html', {'lines': lines, 'sent': sent})
 
 
-@login_required
 def failed_transaction_report(request):
     return render(request, 'Bank Transfer.html')
 
 
-@login_required
 def generate_payslip(request):
     return render(request, 'payslip management/Generate payslip.html')
 
 
-@login_required
 def payment_states(request):
     return render(request, 'Bank Transfer.html')
 
 
-@login_required
 def salary_transfer_file(request):
     return render(request, 'Bank Transfer.html')
 
 
-@login_required
 def payslips_export_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="payslips.csv"'
@@ -744,7 +703,6 @@ def payslips_export_csv(request):
     return response
 
 
-@login_required
 def payslips_export_excel(request):
     import openpyxl
     from openpyxl.utils import get_column_letter
@@ -772,7 +730,6 @@ def payslips_export_excel(request):
 
 
 
-@login_required
 def payroll_run_download_excel(request, pk):
     import openpyxl
     from openpyxl.utils import get_column_letter
@@ -825,6 +782,8 @@ def register_view(request):
 def logout_view(request):
     logout(request)
     return redirect("login")
+
+
 
 
 

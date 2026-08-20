@@ -1,5 +1,5 @@
 ﻿from django import forms
-from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement, PayrollRun, ArrearsRecord, FullFinalSettlement, UserRoleAssignment, CompanySettings, InvestmentDeclaration
+from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement, PayrollRun, ArrearsRecord, FullFinalSettlement, UserRoleAssignment, CompanySettings, InvestmentDeclaration, OnboardingChecklist
 
 
 class EmployeeForm(forms.ModelForm):
@@ -92,3 +92,10 @@ class RegisterForm(UserCreationForm):
     class Meta:
         model = User
         fields = ["username", "email", "password1", "password2"]
+
+
+class OnboardingChecklistForm(forms.ModelForm):
+    class Meta:
+        model = OnboardingChecklist
+        fields = ["employee", "is_offboarding", "offer_letter_signed", "documents_collected", "bank_details_verified", "it_equipment_assigned", "orientation_scheduled", "exit_interview_done", "assets_returned"]
+
