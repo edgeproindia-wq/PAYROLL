@@ -11,7 +11,11 @@
     <a href="{% url 'employee_master_export_csv' %}" class="btn btn-outline">&#8681; Export CSV</a>
     <form method="post" action="{% url 'employee_master_import_xlsx' %}" enctype="multipart/form-data" style="display:inline-flex; gap:8px; align-items:center;">
       {% csrf_token %}
-      <input type="file" name="xlsx_file" accept=".xlsx" required>
+      <label for="xlsxFileInput" class="btn btn-outline" style="margin:0; cursor:pointer;">
+        <span id="xlsxFileLabel">&#128193; Choose XLSX</span>
+      </label>
+      <input type="file" id="xlsxFileInput" name="xlsx_file" accept=".xlsx" required style="display:none;"
+        onchange="document.getElementById('xlsxFileLabel').textContent = this.files.length ? this.files[0].name : '\ud83d\udcc1 Choose XLSX';">
       <button type="submit" class="btn btn-primary">Import XLSX</button>
     </form>
     <button class="btn btn-primary" onclick="document.getElementById('addEmpModal').classList.add('open')">+ Add Employee</button>
@@ -191,5 +195,6 @@
   {% endif %}
 </script>
 {% endblock %}
+
 
 

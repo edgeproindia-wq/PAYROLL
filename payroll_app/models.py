@@ -1,4 +1,12 @@
-from django.db import models
+﻿from django.db import models
+
+
+class EmployeeManager(models.Manager):
+    def numeric_order(self):
+        def sort_key(emp):
+            digits = ''.join(filter(str.isdigit, emp.employee_code))
+            return int(digits) if digits else 0
+        return sorted(self.get_queryset(), key=sort_key)
 
 
 class Employee(models.Model):
@@ -34,6 +42,8 @@ class Employee(models.Model):
 
     class Meta:
         ordering = ['employee_code']
+
+    objects = EmployeeManager()
 
     @property
     def full_name(self):
@@ -253,3 +263,5 @@ class InvestmentDeclaration(models.Model):
 
     def __str__(self):
         return f"{self.employee} - {self.financial_year} - {self.section}"
+
+

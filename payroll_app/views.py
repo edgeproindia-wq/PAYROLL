@@ -129,7 +129,7 @@ def employee_master(request):
             return redirect('employee_master')
     else:
         form = EmployeeForm()
-    all_employees = Employee.objects.all()
+    all_employees = Employee.objects.numeric_order()
     existing_codes = Employee.objects.values_list('employee_code', flat=True).order_by('employee_code')
     paginator = Paginator(all_employees, 50)
     page_number = request.GET.get('page')
@@ -669,5 +669,6 @@ def payroll_run_download_excel(request, pk):
     response['Content-Disposition'] = f'attachment; filename="Payroll_{run.month}.xlsx"'
     wb.save(response)
     return response
+
 
 
