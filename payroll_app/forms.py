@@ -82,3 +82,13 @@ class InvestmentDeclarationForm(forms.ModelForm):
     class Meta:
         model = InvestmentDeclaration
         fields = ['employee', 'financial_year', 'section', 'investment_type', 'declared_amount']
+
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+
+class RegisterForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "password1", "password2"]

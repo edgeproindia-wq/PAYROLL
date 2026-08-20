@@ -1,4 +1,5 @@
 ﻿from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from decimal import Decimal
 from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement
@@ -8,10 +9,12 @@ import csv
 from django.http import HttpResponse
 
 
+@login_required
 def generic_page(request, template_path):
     return render(request, f'{template_path}.html')
 
 
+@login_required
 def dashboard(request):
     from django.db.models import Count
     import json
@@ -60,6 +63,7 @@ def dashboard(request):
     return render(request, 'Dashboard.html', context)
 
 
+@login_required
 def employee_master_export_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="employees.csv"'
@@ -70,45 +74,90 @@ def employee_master_export_csv(request):
     return response
 
 
+@login_required
 def employee_master_import_xlsx(request):
     import openpyxl
-    STATUS_MAP = {'working': 'ACTIVE', 'terminated': 'TERMINATED', 'abscond': 'TERMINATED'}
+    from datetime import date
+
+    STATUS_MAP = {'working': 'ACTIVE', 'active': 'ACTIVE', 'terminated': 'TERMINATED', 'abscond': 'TERMINATED', 'resigned': 'RESIGNED', 'on leave': 'ON_LEAVE'}
+
+    HEADER_ALIASES = {
+        'code': ['emp code', 'employee code', 'code', 'emp id', 'employee id'],
+        'name': ['name', 'employee name', 'full name'],
+        'department': ['dept', 'department', 'team'],
+        'designation': ['designation', 'title', 'role'],
+        'doj': ['date of joining', 'doj', 'joining date'],
+        'status': ['status', 'employment status'],
+    }
+
+    def find_col(headers, aliases):
+        for i, h in enumerate(headers):
+            if h and str(h).strip().lower() in aliases:
+                return i
+        return None
+
     if request.method == 'POST' and request.FILES.get('xlsx_file'):
         f = request.FILES['xlsx_file']
         wb = openpyxl.load_workbook(f, data_only=True)
-        ws = wb['Sheet1']
+        ws = wb.active
+
+        header_row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True))
+        col_map = {key: find_col(header_row, aliases) for key, aliases in HEADER_ALIASES.items()}
+
+        missing_required = [k for k in ('code', 'name') if col_map[k] is None]
+        if missing_required:
+            found = ', '.join(str(h) for h in header_row if h)
+            messages.error(request, f"Import failed: could not find required column(s) {missing_required} in the uploaded file. Columns found: {found}")
+            return redirect('employee_master')
+
         rows = list(ws.iter_rows(min_row=2, values_only=True))
         created, updated, skipped = 0, 0, 0
+
+        def get(row, key):
+            idx = col_map[key]
+            if idx is None or idx >= len(row):
+                return None
+            return row[idx]
+
         for row in rows:
-            code, name, manager, location, dept, team, designation, doj, status, lwd, remarks = row
+            code = get(row, 'code')
+            name = get(row, 'name')
             if not code or not name:
                 skipped += 1
                 continue
+
             name_parts = str(name).strip().split(' ', 1)
             first_name = name_parts[0]
             last_name = name_parts[1] if len(name_parts) > 1 else ''
-            department = dept or team or 'General'
+
+            department = get(row, 'department') or 'General'
+            designation = get(row, 'designation') or 'Not Specified'
+            doj = get(row, 'doj')
+            status = get(row, 'status')
             emp_status = STATUS_MAP.get(str(status).strip().lower(), 'ACTIVE') if status else 'ACTIVE'
+
             obj, was_created = Employee.objects.update_or_create(
                 employee_code=str(code).strip(),
                 defaults={
                     'first_name': first_name,
                     'last_name': last_name,
                     'department': str(department),
-                    'designation': str(designation or 'Not Specified'),
+                    'designation': str(designation),
                     'employment_status': emp_status,
-                    'date_of_joining': doj.date() if doj else '2025-01-01',
-                    'email': f"{str(code).lower()}@edgepro.local",
+                    'date_of_joining': doj.date() if hasattr(doj, 'date') else (doj or date(2025, 1, 1)),
+                    'email': f"{str(code).lower().replace(' ', '')}@edgepro.local",
                 },
             )
             created += 1 if was_created else 0
             updated += 0 if was_created else 1
+
         messages.success(request, f"Import complete. Created={created} Updated={updated} Skipped={skipped}")
         return redirect('employee_master')
     messages.error(request, "No file uploaded.")
     return redirect('employee_master')
 
 
+@login_required
 def employee_master(request):
     from django.core.paginator import Paginator
     max_number = 0
@@ -137,6 +186,7 @@ def employee_master(request):
     return render(request, 'Employee Master.html', {'employees': employees, 'form': form, 'existing_codes': existing_codes, 'number_options': number_options})
 
 
+@login_required
 def employee_edit(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == 'POST':
@@ -151,12 +201,14 @@ def employee_edit(request, pk):
     })
 
 
+@login_required
 def employee_delete(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     employee.delete()
     return redirect('employee_master')
 
 
+@login_required
 def salary_structure(request):
     import json
     if request.method == 'POST':
@@ -178,6 +230,7 @@ def salary_structure(request):
     return render(request, 'Salary Structure.html', {'form': form, 'structures': structures, 'chart_labels': chart_labels, 'chart_basic': chart_basic, 'chart_hra': chart_hra})
 
 
+@login_required
 def attendance(request):
     import json
     if request.method == 'POST':
@@ -200,6 +253,7 @@ def attendance(request):
     return render(request, 'Attendance.html', {'form': form, 'records': records, 'chart_labels': chart_labels, 'chart_values': chart_values})
 
 
+@login_required
 def leave_management(request):
     import json
     if request.method == 'POST':
@@ -222,6 +276,7 @@ def leave_management(request):
     return render(request, 'Leave Management.html', {'form': form, 'leave_requests': leave_requests, 'chart_labels': chart_labels, 'chart_values': chart_values})
 
 
+@login_required
 def reimbursement(request):
     if request.method == 'POST':
         form = ReimbursementForm(request.POST)
@@ -238,6 +293,7 @@ def reimbursement(request):
     return render(request, 'Reimbursement.html', {'form': form, 'reimbursements': reimbursements})
 
 
+@login_required
 def statutory_compliance(request):
     import json
     rows = []
@@ -251,6 +307,7 @@ def statutory_compliance(request):
     return render(request, 'Tax and Compliance/Statutory Compliance.html', {'rows': rows, 'chart_labels': chart_labels, 'chart_pf': chart_pf, 'chart_esi': chart_esi})
 
 
+@login_required
 def investment_declaration(request):
     from .models import InvestmentDeclaration
     from .forms import InvestmentDeclarationForm
@@ -265,6 +322,7 @@ def investment_declaration(request):
     return render(request, 'Income Tax Management/Investment declartion.html', {'form': form, 'declarations': declarations})
 
 
+@login_required
 def income_tax(request):
     import json
     rows = []
@@ -282,6 +340,7 @@ def income_tax(request):
     return render(request, 'Tax and Compliance/Income Tax.html', {'rows': rows, 'chart_labels': chart_labels, 'chart_values': chart_values})
 
 
+@login_required
 def compliance_reports(request):
     import json
     structures = SalaryStructure.objects.all()
@@ -296,6 +355,7 @@ def compliance_reports(request):
     })
 
 
+@login_required
 def total_employees_report(request):
     import json
     from django.db.models import Count, Q
@@ -319,6 +379,7 @@ def total_employees_report(request):
     return render(request, 'Payroll/Total Employees.html', context)
 
 
+@login_required
 def new_joiners_report(request):
     from datetime import date, timedelta
     cutoff = date.today() - timedelta(days=90)
@@ -326,6 +387,7 @@ def new_joiners_report(request):
     return render(request, 'Payroll/New Joiners.html', {'employees': employees, 'cutoff': cutoff})
 
 
+@login_required
 def payroll_cost_report(request):
     import json
     from django.db.models import Sum, Count, F
@@ -340,11 +402,13 @@ def payroll_cost_report(request):
     return render(request, 'Payroll/Payroll Cost.html', {'dept_costs': dept_costs, 'overall_total': overall_total, 'chart_labels': chart_labels, 'chart_values': chart_values})
 
 
+@login_required
 def pending_payroll_report(request):
     pending_runs = PayrollRun.objects.exclude(status='RELEASED').prefetch_related('lines')
     return render(request, 'Payroll/Pending Payroll.html', {'pending_runs': pending_runs})
 
 
+@login_required
 def employees_on_leave_report(request):
     from datetime import date
     today = date.today()
@@ -352,6 +416,7 @@ def employees_on_leave_report(request):
     return render(request, 'Payroll/Employees On Leave.html', {'on_leave': on_leave, 'today': today})
 
 
+@login_required
 def payroll_run_download_docx(request, pk):
     from docx import Document
     run = get_object_or_404(PayrollRun, pk=pk)
@@ -381,12 +446,14 @@ def payroll_run_download_docx(request, pk):
     return response
 
 
+@login_required
 def payroll_run_detail(request, pk):
     run = get_object_or_404(PayrollRun, pk=pk)
     lines = run.lines.select_related('employee').all()
     return render(request, 'Payroll/Payroll Run Detail.html', {'run': run, 'lines': lines})
 
 
+@login_required
 def payroll_combined(request):
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -461,6 +528,7 @@ def payroll_combined(request):
     return render(request, 'Payroll/Payroll Combined.html', {'form': form, 'payroll_runs': payroll_runs, 'summary': summary})
 
 
+@login_required
 def arrears(request):
     from .models import ArrearsRecord
     from .forms import ArrearsForm
@@ -475,6 +543,7 @@ def arrears(request):
     return render(request, 'Adjustments/Arrears.html', {'form': form, 'records': records})
 
 
+@login_required
 def full_final_settlement(request):
     from .models import FullFinalSettlement
     from .forms import FullFinalSettlementForm
@@ -489,16 +558,19 @@ def full_final_settlement(request):
     return render(request, 'Adjustments/Full and Final Settlement.html', {'form': form, 'records': records})
 
 
+@login_required
 def payslips(request):
     lines = PayrollRunLine.objects.select_related('employee', 'payroll_run').filter(payroll_run__status='RELEASED')
     return render(request, 'Payslips.html', {'lines': lines})
 
 
+@login_required
 def bank_transfer(request):
     lines = PayrollRunLine.objects.select_related('employee', 'payroll_run').filter(payroll_run__status='RELEASED')
     return render(request, 'Bank Transfer.html', {'lines': lines})
 
 
+@login_required
 def reports_analytics(request):
     import json
     context = {
@@ -514,6 +586,7 @@ def reports_analytics(request):
     return render(request, 'Reports and Analytics.html', context)
 
 
+@login_required
 def ess(request):
     context = {
         'total_payslips': PayrollRunLine.objects.filter(payroll_run__status='RELEASED').count(),
@@ -523,6 +596,7 @@ def ess(request):
     return render(request, 'ESS.html', context)
 
 
+@login_required
 def notifications(request):
     from datetime import date, timedelta
     recent_cutoff = date.today() - timedelta(days=30)
@@ -537,6 +611,7 @@ def notifications(request):
     return render(request, 'Notifications.html', {'notices': notices})
 
 
+@login_required
 def user_roles_permissions(request):
     from .models import UserRoleAssignment
     from .forms import UserRoleAssignmentForm
@@ -551,6 +626,7 @@ def user_roles_permissions(request):
     return render(request, 'User Roles and Permissions.html', {'form': form, 'assignments': assignments})
 
 
+@login_required
 def settings(request):
     from .models import CompanySettings
     from .forms import CompanySettingsForm
@@ -565,6 +641,7 @@ def settings(request):
     return render(request, 'Settings.html', {'form': form})
 
 
+@login_required
 def payslip_history(request):
     from django.core.paginator import Paginator
     all_lines = PayrollRunLine.objects.select_related('employee', 'payroll_run').filter(payroll_run__status='RELEASED').order_by('-payroll_run__created_at')
@@ -574,35 +651,85 @@ def payslip_history(request):
     return render(request, 'payslip management/payslip History.html', {'lines': lines})
 
 
+@login_required
 def download_pdf(request):
     lines = PayrollRunLine.objects.select_related('employee', 'payroll_run').filter(payroll_run__status='RELEASED')
     return render(request, 'payslip management/Download PDF.html', {'lines': lines})
 
 
+@login_required
+def _generate_payslip_pdf(line):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+    from io import BytesIO
+    buf = BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, 800, "Payslip")
+    c.setFont("Helvetica", 11)
+    c.drawString(50, 770, f"Employee: {line.employee.full_name}")
+    c.drawString(50, 752, f"Employee Code: {line.employee.employee_code}")
+    c.drawString(50, 734, f"Month: {line.payroll_run.month}")
+    c.drawString(50, 716, f"Basic: Rs. {line.basic}")
+    c.drawString(50, 698, f"Gross Salary: Rs. {line.gross_salary}")
+    c.drawString(50, 680, f"Net Pay: Rs. {line.net_pay}")
+    c.showPage()
+    c.save()
+    buf.seek(0)
+    return buf.read()
+
+
+@login_required
 def email_payslip(request):
+    from django.core.mail import EmailMessage
     lines = PayrollRunLine.objects.select_related('employee', 'payroll_run').filter(payroll_run__status='RELEASED')
     sent = False
+    send_errors = []
     if request.method == 'POST':
+        for line in lines:
+            if not line.employee.email:
+                send_errors.append(f"{line.employee.full_name}: no email on file")
+                continue
+            try:
+                pdf_bytes = _generate_payslip_pdf(line)
+                email = EmailMessage(
+                    subject=f"Payslip - {line.payroll_run.month}",
+                    body=f"Dear {line.employee.full_name},\n\nPlease find attached your payslip for {line.payroll_run.month}.\n\nRegards,\nPayroll Team",
+                    to=[line.employee.email],
+                )
+                email.attach(f"Payslip_{line.employee.employee_code}_{line.payroll_run.month}.pdf", pdf_bytes, "application/pdf")
+                email.send(fail_silently=False)
+            except Exception as e:
+                send_errors.append(f"{line.employee.full_name}: {str(e)}")
         sent = True
+        if send_errors:
+            messages.error(request, f"{len(send_errors)} email(s) failed: " + "; ".join(send_errors[:5]))
+        else:
+            messages.success(request, f"Sent {lines.count()} payslip email(s) successfully.")
     return render(request, 'payslip management/Email payslip.html', {'lines': lines, 'sent': sent})
 
 
+@login_required
 def failed_transaction_report(request):
     return render(request, 'Bank Transfer.html')
 
 
+@login_required
 def generate_payslip(request):
     return render(request, 'payslip management/Generate payslip.html')
 
 
+@login_required
 def payment_states(request):
     return render(request, 'Bank Transfer.html')
 
 
+@login_required
 def salary_transfer_file(request):
     return render(request, 'Bank Transfer.html')
 
 
+@login_required
 def payslips_export_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="payslips.csv"'
@@ -617,6 +744,7 @@ def payslips_export_csv(request):
     return response
 
 
+@login_required
 def payslips_export_excel(request):
     import openpyxl
     from openpyxl.utils import get_column_letter
@@ -644,6 +772,7 @@ def payslips_export_excel(request):
 
 
 
+@login_required
 def payroll_run_download_excel(request, pk):
     import openpyxl
     from openpyxl.utils import get_column_letter
@@ -669,6 +798,33 @@ def payroll_run_download_excel(request, pk):
     response['Content-Disposition'] = f'attachment; filename="Payroll_{run.month}.xlsx"'
     wb.save(response)
     return response
+
+
+
+
+
+from django.contrib.auth import login, logout
+from django.contrib.auth.views import LoginView
+from django.contrib.auth.decorators import login_required
+from .forms import RegisterForm
+
+class CustomLoginView(LoginView):
+    template_name = "login.html"
+
+def register_view(request):
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect("dashboard")
+    else:
+        form = RegisterForm()
+    return render(request, "register.html", {"form": form})
+
+def logout_view(request):
+    logout(request)
+    return redirect("login")
 
 
 
