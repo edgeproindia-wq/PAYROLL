@@ -6,6 +6,7 @@ urlpatterns = [
 
     path('employee_master/', views.employee_master, name='employee_master'),
     path('employee_master/export/csv/', views.employee_master_export_csv, name='employee_master_export_csv'),
+    path('employee_master/import_xlsx/', views.employee_master_import_xlsx, name='employee_master_import_xlsx'),
     path('employee/<int:pk>/edit/', views.employee_edit, name='employee_edit'),
     path('employee/<int:pk>/delete/', views.employee_delete, name='employee_delete'),
 
@@ -60,4 +61,5 @@ urlpatterns = [
 
     path('page/<path:template_path>/', views.generic_page, name='generic_page'),
 ]
+
 

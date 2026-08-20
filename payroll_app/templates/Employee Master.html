@@ -9,6 +9,11 @@
   </div>
   <div class="page-actions">
     <a href="{% url 'employee_master_export_csv' %}" class="btn btn-outline">&#8681; Export CSV</a>
+    <form method="post" action="{% url 'employee_master_import_xlsx' %}" enctype="multipart/form-data" style="display:inline-flex; gap:8px; align-items:center;">
+      {% csrf_token %}
+      <input type="file" name="xlsx_file" accept=".xlsx" required>
+      <button type="submit" class="btn btn-primary">Import XLSX</button>
+    </form>
     <button class="btn btn-primary" onclick="document.getElementById('addEmpModal').classList.add('open')">+ Add Employee</button>
   </div>
 </div>
@@ -186,4 +191,5 @@
   {% endif %}
 </script>
 {% endblock %}
+
 

@@ -70,6 +70,45 @@ def employee_master_export_csv(request):
     return response
 
 
+def employee_master_import_xlsx(request):
+    import openpyxl
+    STATUS_MAP = {'working': 'ACTIVE', 'terminated': 'TERMINATED', 'abscond': 'TERMINATED'}
+    if request.method == 'POST' and request.FILES.get('xlsx_file'):
+        f = request.FILES['xlsx_file']
+        wb = openpyxl.load_workbook(f, data_only=True)
+        ws = wb['Sheet1']
+        rows = list(ws.iter_rows(min_row=2, values_only=True))
+        created, updated, skipped = 0, 0, 0
+        for row in rows:
+            code, name, manager, location, dept, team, designation, doj, status, lwd, remarks = row
+            if not code or not name:
+                skipped += 1
+                continue
+            name_parts = str(name).strip().split(' ', 1)
+            first_name = name_parts[0]
+            last_name = name_parts[1] if len(name_parts) > 1 else ''
+            department = dept or team or 'General'
+            emp_status = STATUS_MAP.get(str(status).strip().lower(), 'ACTIVE') if status else 'ACTIVE'
+            obj, was_created = Employee.objects.update_or_create(
+                employee_code=str(code).strip(),
+                defaults={
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'department': str(department),
+                    'designation': str(designation or 'Not Specified'),
+                    'employment_status': emp_status,
+                    'date_of_joining': doj.date() if doj else '2025-01-01',
+                    'email': f"{str(code).lower()}@edgepro.local",
+                },
+            )
+            created += 1 if was_created else 0
+            updated += 0 if was_created else 1
+        messages.success(request, f"Import complete. Created={created} Updated={updated} Skipped={skipped}")
+        return redirect('employee_master')
+    messages.error(request, "No file uploaded.")
+    return redirect('employee_master')
+
+
 def employee_master(request):
     from django.core.paginator import Paginator
     max_number = 0
@@ -630,4 +669,5 @@ def payroll_run_download_excel(request, pk):
     response['Content-Disposition'] = f'attachment; filename="Payroll_{run.month}.xlsx"'
     wb.save(response)
     return response
+
 
