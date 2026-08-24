@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
+    path('dashboard/payroll_cost/export/excel/', views.dashboard_payroll_cost_export_excel, name='dashboard_payroll_cost_export_excel'),
 
     path('employee_master/', views.employee_master, name='employee_master'),
     path('employee_master/export/csv/', views.employee_master_export_csv, name='employee_master_export_csv'),
@@ -69,4 +70,10 @@ urlpatterns += [
     path("login/", CustomLoginView.as_view(), name="login"),
     path("register/", register_view, name="register"),
     path("logout/", logout_view, name="logout"),
+    path("verify_email/<str:token>/", views.verify_email, name="verify_email"),
+    path("request_demo/", views.request_demo, name="request_demo"),
 ]
+
+
+
+

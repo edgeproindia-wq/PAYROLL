@@ -91,6 +91,10 @@
     <div class="card-body"><div class="chart-box sm"><canvas id="runChart"></canvas></div></div>
   </div>
   <div class="card">
+    <div class="card-header"><h3>Payroll Cost Summary <a href="{% url 'dashboard_payroll_cost_export_excel' %}" style="float:right;font-size:12px;">Excel</a></h3></div>
+    <div class="card-body"><div class="chart-box"><canvas id="payrollCostChart"></canvas></div></div>
+  </div>
+  <div class="card">
     <div class="card-header">
       <h3>To-Do</h3>
     </div>
@@ -193,4 +197,5 @@
   });
 </script>
 {% endblock %}
+
 

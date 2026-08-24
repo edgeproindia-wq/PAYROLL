@@ -49,6 +49,24 @@ class Employee(models.Model):
     def full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
 
+    @property
+    def total_earnings_from_components(self):
+        components = self.salary_components.filter(is_active=True, component__component_type="EARNING")
+        return sum(c.computed_amount for c in components)
+
+    @property
+    def total_deductions_from_components(self):
+        components = self.salary_components.filter(is_active=True, component__component_type="DEDUCTION")
+        return sum(c.computed_amount for c in components)
+
+    @property
+    def net_from_components(self):
+        return self.total_earnings_from_components - self.total_deductions_from_components
+
+    @property
+    def has_configurable_salary(self):
+        return self.salary_components.filter(is_active=True).exists()
+
     def __str__(self):
         return f"{self.employee_code} - {self.full_name}"
 
@@ -290,3 +308,99 @@ class OnboardingChecklist(models.Model):
 
     def __str__(self):
         return f"{'Offboarding' if self.is_offboarding else 'Onboarding'} - {self.employee.full_name}"
+
+
+class SalaryComponent(models.Model):
+    COMPONENT_TYPE_CHOICES = [("EARNING", "Earning"), ("DEDUCTION", "Deduction")]
+    CALC_TYPE_CHOICES = [("FIXED", "Fixed Amount"), ("PERCENTAGE", "Percentage of Basic")]
+
+    name = models.CharField(max_length=100, unique=True)
+    component_type = models.CharField(max_length=10, choices=COMPONENT_TYPE_CHOICES)
+    calculation_type = models.CharField(max_length=12, choices=CALC_TYPE_CHOICES, default="FIXED")
+    is_taxable = models.BooleanField(default=True)
+    is_employer_contribution = models.BooleanField(default=False)
+    include_in_ctc = models.BooleanField(default=True)
+    show_in_payslip = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["component_type", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.get_component_type_display()})"
+
+
+class SalaryTemplate(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class SalaryTemplateComponent(models.Model):
+    template = models.ForeignKey(SalaryTemplate, on_delete=models.CASCADE, related_name="components")
+    component = models.ForeignKey(SalaryComponent, on_delete=models.CASCADE)
+    value = models.DecimalField(max_digits=10, decimal_places=2, help_text="Fixed amount, or percentage if component is percentage-based")
+
+    class Meta:
+        unique_together = ("template", "component")
+
+    def __str__(self):
+        return f"{self.template.name} - {self.component.name}"
+
+
+class EmployeeSalaryComponent(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="salary_components")
+    component = models.ForeignKey(SalaryComponent, on_delete=models.CASCADE)
+    value = models.DecimalField(max_digits=10, decimal_places=2, help_text="Fixed amount, or percentage if component is percentage-based")
+    effective_from = models.DateField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("employee", "component", "effective_from")
+        ordering = ["-effective_from"]
+
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.component.name}"
+
+    @property
+    def computed_amount(self):
+        if self.component.calculation_type == "PERCENTAGE":
+            basic = EmployeeSalaryComponent.objects.filter(
+                employee=self.employee, component__name__iexact="Basic", is_active=True
+            ).order_by("-effective_from").first()
+            basic_value = basic.value if basic else 0
+            return round(basic_value * self.value / 100, 2)
+        return self.value
+
+
+
+class DemoRequest(models.Model):
+    full_name = models.CharField(max_length=150)
+    company_name = models.CharField(max_length=150)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.full_name} - {self.company_name}"
+
+
+class EmailVerificationToken(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+    email_verified = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Token for {self.user.username}"

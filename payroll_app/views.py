@@ -38,6 +38,12 @@ def dashboard(request):
     pending_investment_declarations = InvestmentDeclaration.objects.filter(is_verified=False).count()
     recent_leaves = LeaveRequest.objects.select_related('employee').order_by('-id')[:5]
     recent_reimbursements = Reimbursement.objects.select_related('employee').order_by('-id')[:5]
+
+    from django.db.models import Sum
+    cost_data = PayrollRunLine.objects.filter(payroll_run__status='RELEASED').values('payroll_run__month').annotate(total=Sum('net_pay')).order_by('payroll_run__id')
+    cost_labels = json.dumps([c['payroll_run__month'] for c in cost_data])
+    cost_values = json.dumps([float(c['total']) for c in cost_data])
+
     context = {
         'dept_labels': dept_labels,
         'dept_values': dept_values,
@@ -57,8 +63,34 @@ def dashboard(request):
         'pending_approvals': PayrollRun.objects.filter(status='VALIDATED').count(),
         'recent_leaves': recent_leaves,
         'recent_reimbursements': recent_reimbursements,
+        'cost_labels': cost_labels,
+        'cost_values': cost_values,
     }
     return render(request, 'Dashboard.html', context)
+
+
+def dashboard_payroll_cost_export_excel(request):
+    import openpyxl
+    from openpyxl.utils import get_column_letter
+    from django.db.models import Sum
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Payroll Cost Summary"
+    headers = ['Month', 'Total Net Payout']
+    ws.append(headers)
+
+    cost_data = PayrollRunLine.objects.filter(payroll_run__status='RELEASED').values('payroll_run__month').annotate(total=Sum('net_pay')).order_by('payroll_run__id')
+    for c in cost_data:
+        ws.append([c['payroll_run__month'], float(c['total'])])
+
+    for i, header in enumerate(headers, 1):
+        ws.column_dimensions[get_column_letter(i)].width = max(18, len(header) + 4)
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="Payroll_Cost_Summary.xlsx"'
+    wb.save(response)
+    return response
 
 
 def employee_master_export_csv(request):
@@ -220,6 +252,98 @@ def salary_structure(request):
     chart_basic = json.dumps([float(s.basic) for s in all_structures_for_chart])
     chart_hra = json.dumps([float(s.hra) for s in all_structures_for_chart])
     return render(request, 'Salary Structure.html', {'form': form, 'structures': structures, 'chart_labels': chart_labels, 'chart_basic': chart_basic, 'chart_hra': chart_hra})
+
+
+def salary_components(request):
+    if request.method == 'POST':
+        form = SalaryComponentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('salary_components')
+    else:
+        form = SalaryComponentForm()
+    components = SalaryComponent.objects.all()
+    return render(request, 'Salary Components.html', {'form': form, 'components': components})
+
+
+def salary_templates(request):
+    from .forms import SalaryTemplateForm
+    if request.method == 'POST':
+        form = SalaryTemplateForm(request.POST)
+        if form.is_valid():
+            template = form.save()
+            for comp in SalaryComponent.objects.filter(is_active=True):
+                value = request.POST.get(f'component_{comp.id}')
+                if value:
+                    SalaryTemplateComponent.objects.create(template=template, component=comp, value=value)
+            return redirect('salary_templates')
+    else:
+        form = SalaryTemplateForm()
+    templates = SalaryTemplate.objects.prefetch_related('components__component').all()
+    all_components = SalaryComponent.objects.filter(is_active=True)
+    return render(request, 'Salary Templates.html', {'form': form, 'templates': templates, 'all_components': all_components})
+
+
+def employee_salary_components(request):
+    from django.core.paginator import Paginator
+    if request.method == 'POST':
+        form = EmployeeSalaryComponentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('employee_salary_components')
+    else:
+        form = EmployeeSalaryComponentForm()
+    all_assignments = EmployeeSalaryComponent.objects.select_related('employee', 'component').filter(is_active=True).order_by('employee__employee_code')
+    paginator = Paginator(all_assignments, 15)
+    page_number = request.GET.get('page')
+    assignments = paginator.get_page(page_number)
+    return render(request, 'Employee Salary Components.html', {'form': form, 'assignments': assignments})
+
+
+def salary_components(request):
+    if request.method == 'POST':
+        form = SalaryComponentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('salary_components')
+    else:
+        form = SalaryComponentForm()
+    components = SalaryComponent.objects.all()
+    return render(request, 'Salary Components.html', {'form': form, 'components': components})
+
+
+def salary_templates(request):
+    from .forms import SalaryTemplateForm
+    if request.method == 'POST':
+        form = SalaryTemplateForm(request.POST)
+        if form.is_valid():
+            template = form.save()
+            for comp in SalaryComponent.objects.filter(is_active=True):
+                value = request.POST.get(f'component_{comp.id}')
+                if value:
+                    SalaryTemplateComponent.objects.create(template=template, component=comp, value=value)
+            return redirect('salary_templates')
+    else:
+        form = SalaryTemplateForm()
+    templates = SalaryTemplate.objects.prefetch_related('components__component').all()
+    all_components = SalaryComponent.objects.filter(is_active=True)
+    return render(request, 'Salary Templates.html', {'form': form, 'templates': templates, 'all_components': all_components})
+
+
+def employee_salary_components(request):
+    from django.core.paginator import Paginator
+    if request.method == 'POST':
+        form = EmployeeSalaryComponentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('employee_salary_components')
+    else:
+        form = EmployeeSalaryComponentForm()
+    all_assignments = EmployeeSalaryComponent.objects.select_related('employee', 'component').filter(is_active=True).order_by('employee__employee_code')
+    paginator = Paginator(all_assignments, 15)
+    page_number = request.GET.get('page')
+    assignments = paginator.get_page(page_number)
+    return render(request, 'Employee Salary Components.html', {'form': form, 'assignments': assignments})
 
 
 def attendance(request):
@@ -487,6 +611,15 @@ def payroll_combined(request):
                     except SalaryStructure.DoesNotExist:
                         pass
                 messages.success(request, f"'{run.month}' reprocessed successfully.")
+        elif action == 'delete':
+            run_id = request.POST.get('run_id')
+            run = get_object_or_404(PayrollRun, pk=run_id)
+            if run.status == 'RELEASED':
+                messages.error(request, f"Cannot delete '{run.month}' - it has already been released. Released payroll records must be preserved.")
+            else:
+                month = run.month
+                run.delete()
+                messages.success(request, f"'{month}' payroll run deleted.")
         return redirect('payroll_combined')
     else:
         form = PayrollRunForm()
@@ -787,3 +920,71 @@ def logout_view(request):
 
 
 
+
+
+
+
+
+
+
+def request_demo(request):
+    from .forms import DemoRequestForm
+    if request.method == 'POST':
+        form = DemoRequestForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Thank you! Your demo request has been received. Our team will contact you shortly.")
+            return redirect('request_demo')
+    else:
+        form = DemoRequestForm()
+    return render(request, 'Request Demo.html', {'form': form})
+
+
+def register_view(request):
+    import secrets
+    from django.contrib.auth.forms import UserCreationForm
+    from django.contrib.auth.models import User
+    from django.core.mail import send_mail
+    from django.conf import settings as django_settings
+
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.email = request.POST.get('email', '')
+            user.is_active = False
+            user.save()
+
+            token = secrets.token_urlsafe(32)
+            EmailVerificationToken.objects.create(user=user, token=token)
+
+            verify_link = request.build_absolute_uri(f'/verify_email/{token}/')
+            try:
+                send_mail(
+                    subject='Verify your email - Payroll Management',
+                    message=f'Hi {user.username},\n\nPlease verify your email by clicking this link:\n{verify_link}\n\nAfter verification, an administrator will review and approve your account before you can log in.',
+                    from_email=django_settings.EMAIL_HOST_USER,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                messages.success(request, "Registration submitted! Please check your email to verify your account. After verification, an admin will approve your access.")
+            except Exception as e:
+                messages.warning(request, f"Account created but verification email failed to send: {str(e)}. Contact admin.")
+            return redirect('login')
+    else:
+        form = UserCreationForm()
+    return render(request, 'register.html', {'form': form})
+
+
+def verify_email(request, token):
+    try:
+        record = EmailVerificationToken.objects.get(token=token, is_used=False)
+    except EmailVerificationToken.DoesNotExist:
+        messages.error(request, "Invalid or expired verification link.")
+        return redirect('login')
+
+    record.is_used = True
+    record.email_verified = True
+    record.save()
+    messages.success(request, "Email verified successfully! Your account is now pending admin approval. You'll be able to log in once approved.")
+    return redirect('login')
