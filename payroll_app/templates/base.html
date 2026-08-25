@@ -1,4 +1,5 @@
 ﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,17 +10,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy:#0f172a; --navy-soft:#1e293b; --navy-line:#334155;
-    --ink:#0f172a; --body:#334155; --muted:#64748b; --faint:#94a3b8;
-    --paper:#f4f6f9; --card:#ffffff; --line:#e6e9f0; --line-soft:#eef1f6;
-    --accent:#4f46e5; --accent-dark:#4338ca; --accent-soft:#eef0fe;
-    --success:#0f9d6a; --success-soft:#e5f8f1;
-    --warn:#b45309; --warn-soft:#fef3e0;
-    --danger:#dc2626; --danger-soft:#fdeceb;
-    --info:#0369a1; --info-soft:#e6f4fb;
+    --navy:#070B14; --navy-soft:#151F32; --navy-line:#263247;
+    --ink:#F8FAFC; --body:#CBD5E1; --muted:#94A3B8; --faint:#64748B;
+    --paper:#0B1120; --card:#151F32; --line:#263247; --line-soft:#1C2740;
+    --accent:#2563EB; --accent-dark:#1D4ED8; --accent-soft:rgba(37,99,235,.15);
+    --success:#22C55E; --success-soft:rgba(34,197,94,.12);
+    --warn:#F59E0B; --warn-soft:rgba(245,158,11,.12);
+    --danger:#EF4444; --danger-soft:rgba(239,68,68,.12);
+    --info:#38BDF8; --info-soft:rgba(56,189,248,.12);
     --radius:12px; --radius-sm:8px;
-    --shadow:0 1px 2px rgba(15,23,42,.04), 0 1px 8px rgba(15,23,42,.05);
-    --shadow-md:0 4px 20px rgba(15,23,42,.08);
+    --shadow:0 1px 2px rgba(0,0,0,.2), 0 1px 8px rgba(0,0,0,.25);
+    --shadow-md:0 4px 24px rgba(0,0,0,.4);
   }
   * { box-sizing:border-box; }
   html{ height:100%; }
@@ -67,7 +68,7 @@
   .btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; font-family:inherit; font-size:12.5px; font-weight:600; padding:9px 16px; border-radius:8px; border:1px solid transparent; cursor:pointer; text-decoration:none; transition:.12s ease; line-height:1; white-space:nowrap; }
   .btn-primary{ background:var(--accent); color:#fff; }
   .btn-primary:hover{ background:var(--accent-dark); }
-  .btn-outline{ background:#fff; color:var(--body); border-color:var(--line); }
+  .btn-outline{ background:var(--card); color:var(--body); border-color:var(--line); }
   .btn-outline:hover{ border-color:var(--accent); color:var(--accent); }
   .btn-dark{ background:var(--navy); color:#fff; }
   .btn-dark:hover{ background:var(--navy-soft); }
@@ -91,7 +92,7 @@
   input[type=text], input[type=email], input[type=number], input[type=date], input[type=password],
   input[type=tel], select, textarea{
     width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:8px; font-family:inherit;
-    font-size:13px; background:#fff; color:var(--ink); transition:border-color .12s;
+    font-size:13px; background:var(--card); color:var(--ink); transition:border-color .12s;
   }
   input:focus, select:focus, textarea:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
   .form-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px 18px; }
@@ -104,9 +105,9 @@
   table { width:100%; border-collapse:collapse; background:var(--card); font-size:13px; }
   th, td { text-align:left; padding:12px 16px; border-bottom:1px solid var(--line-soft); white-space:nowrap; }
   td.wrap, th.wrap{ white-space:normal; }
-  th { background:#fafbfd; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.03em; position:sticky; top:0; }
+  th { background:var(--navy-soft); color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.03em; position:sticky; top:0; }
   tbody tr{ transition:background .1s; }
-  tbody tr:hover{ background:#fafbfe; }
+  tbody tr:hover{ background:var(--line-soft); }
   tbody tr:last-child td{ border-bottom:none; }
   .row-actions{ display:flex; gap:6px; }
   .avatar-sm{ width:34px; height:34px; border-radius:10px; background:var(--accent-soft); color:var(--accent); display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; margin-right:10px; vertical-align:middle; }
@@ -144,7 +145,7 @@
 
   .modal-overlay{ display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:100; align-items:center; justify-content:center; padding:20px; }
   .modal-overlay.open{ display:flex; }
-  .modal-box{ background:#fff; border-radius:var(--radius); max-width:520px; width:100%; max-height:88vh; overflow-y:auto; box-shadow:var(--shadow-md); }
+  .modal-box{ background:var(--card); border-radius:var(--radius); max-width:520px; width:100%; max-height:88vh; overflow-y:auto; box-shadow:var(--shadow-md); }
   .modal-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--line-soft); }
   .modal-head h3{ margin:0; font-size:15px; font-weight:700; }
   .modal-close{ cursor:pointer; background:none; border:none; font-size:18px; color:var(--muted); }
@@ -259,7 +260,15 @@
   </div>
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="document.getElementById('mainSidebar').classList.remove('mobile-open'); this.classList.remove('open');"></div>
   <div class="sidebar" id="mainSidebar">
-    <h2>PAYROLL MANAGEMENT</h2>
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 4px 16px;border-bottom:1px solid var(--navy-line);margin-bottom:10px;" title="EDGEPRO AXIS INDIA PRIVATE LIMITED">
+      <div style="background:#fff;border-radius:8px;padding:6px 8px;flex-shrink:0;">
+        <img src="{% static 'images/edgepro-logo.png' %}" alt="EdgePro Axis" style="height:22px;display:block;">
+      </div>
+      <div style="min-width:0;">
+        <div style="color:#fff;font-size:12.5px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">EdgePro Axis</div>
+        <div style="color:#94a3b8;font-size:9.5px;line-height:1.2;">India Private Limited</div>
+      </div>
+    </div>
 
     <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
     <a href="{% url 'employee_master' %}" class="{% if request.resolver_match.url_name == 'employee_master' %}active{% endif %}">Employee Master</a>
@@ -287,6 +296,8 @@
         <a href="{% url 'settings' %}">Settings</a>
       </div>
     </div>
+
+    <a href="{% url 'logout' %}" style="margin-top:16px; border-top:1px solid rgba(255,255,255,0.1); padding-top:16px; display:block;">Logout</a>
   </div>
 
   <script>
@@ -323,6 +334,15 @@
   </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
 
 
 

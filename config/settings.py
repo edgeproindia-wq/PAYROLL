@@ -130,3 +130,10 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
+
+DEMO_ADMIN_EMAIL = os.environ.get("DEMO_ADMIN_EMAIL", "edgeproindia@gmail.com")
+DEMO_ADMIN_MOBILE = os.environ.get("DEMO_ADMIN_MOBILE", "63835383565")
+SMS_PROVIDER = os.environ.get("SMS_PROVIDER", "")
+SMS_API_KEY = os.environ.get("SMS_API_KEY", "")
+SMS_SENDER_ID = os.environ.get("SMS_SENDER_ID", "")
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

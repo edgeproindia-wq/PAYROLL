@@ -2,7 +2,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from decimal import Decimal
-from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement
+from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement, EmailVerificationToken
 from .forms import EmployeeForm, SalaryStructureForm, AttendanceForm, LeaveRequestForm, ReimbursementForm, PayrollRunForm
 from .models import PayrollRun, PayrollRunLine, InvestmentDeclaration
 import csv
@@ -252,52 +252,6 @@ def salary_structure(request):
     chart_basic = json.dumps([float(s.basic) for s in all_structures_for_chart])
     chart_hra = json.dumps([float(s.hra) for s in all_structures_for_chart])
     return render(request, 'Salary Structure.html', {'form': form, 'structures': structures, 'chart_labels': chart_labels, 'chart_basic': chart_basic, 'chart_hra': chart_hra})
-
-
-def salary_components(request):
-    if request.method == 'POST':
-        form = SalaryComponentForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('salary_components')
-    else:
-        form = SalaryComponentForm()
-    components = SalaryComponent.objects.all()
-    return render(request, 'Salary Components.html', {'form': form, 'components': components})
-
-
-def salary_templates(request):
-    from .forms import SalaryTemplateForm
-    if request.method == 'POST':
-        form = SalaryTemplateForm(request.POST)
-        if form.is_valid():
-            template = form.save()
-            for comp in SalaryComponent.objects.filter(is_active=True):
-                value = request.POST.get(f'component_{comp.id}')
-                if value:
-                    SalaryTemplateComponent.objects.create(template=template, component=comp, value=value)
-            return redirect('salary_templates')
-    else:
-        form = SalaryTemplateForm()
-    templates = SalaryTemplate.objects.prefetch_related('components__component').all()
-    all_components = SalaryComponent.objects.filter(is_active=True)
-    return render(request, 'Salary Templates.html', {'form': form, 'templates': templates, 'all_components': all_components})
-
-
-def employee_salary_components(request):
-    from django.core.paginator import Paginator
-    if request.method == 'POST':
-        form = EmployeeSalaryComponentForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('employee_salary_components')
-    else:
-        form = EmployeeSalaryComponentForm()
-    all_assignments = EmployeeSalaryComponent.objects.select_related('employee', 'component').filter(is_active=True).order_by('employee__employee_code')
-    paginator = Paginator(all_assignments, 15)
-    page_number = request.GET.get('page')
-    assignments = paginator.get_page(page_number)
-    return render(request, 'Employee Salary Components.html', {'form': form, 'assignments': assignments})
 
 
 def salary_components(request):
@@ -901,17 +855,6 @@ from .forms import RegisterForm
 class CustomLoginView(LoginView):
     template_name = "login.html"
 
-def register_view(request):
-    if request.method == "POST":
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect("dashboard")
-    else:
-        form = RegisterForm()
-    return render(request, "register.html", {"form": form})
-
 def logout_view(request):
     logout(request)
     return redirect("login")
@@ -932,7 +875,19 @@ def request_demo(request):
     if request.method == 'POST':
         form = DemoRequestForm(request.POST)
         if form.is_valid():
-            form.save()
+            demo_request = form.save()
+            try:
+                from django.core.mail import send_mail
+                from django.conf import settings as django_settings
+                send_mail(
+                    subject='New Demo Request - ' + demo_request.company_name,
+                    message='Full Name: ' + demo_request.full_name + chr(10) + 'Company: ' + demo_request.company_name + chr(10) + 'Email: ' + demo_request.email + chr(10) + 'Phone: ' + demo_request.phone + chr(10) + 'Message: ' + demo_request.message,
+                    from_email=django_settings.EMAIL_HOST_USER,
+                    recipient_list=['jaganbharath46@gmail.com'],
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
             messages.success(request, "Thank you! Your demo request has been received. Our team will contact you shortly.")
             return redirect('request_demo')
     else:
@@ -942,27 +897,41 @@ def request_demo(request):
 
 def register_view(request):
     import secrets
-    from django.contrib.auth.forms import UserCreationForm
     from django.contrib.auth.models import User
     from django.core.mail import send_mail
     from django.conf import settings as django_settings
 
+    error = None
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.email = request.POST.get('email', '')
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        password2 = request.POST.get('password2', '')
+
+        if not username:
+            error = "Please choose a username."
+        elif not email:
+            error = "Please enter your email address."
+        elif User.objects.filter(username__iexact=username).exists():
+            error = "That username is already taken."
+        elif User.objects.filter(email__iexact=email).exists():
+            error = "That email is already registered."
+        elif len(password) < 8:
+            error = "Password must be at least 8 characters long."
+        elif password != password2:
+            error = "Passwords do not match."
+        else:
+            user = User.objects.create_user(username=username, email=email, password=password)
             user.is_active = False
             user.save()
 
             token = secrets.token_urlsafe(32)
             EmailVerificationToken.objects.create(user=user, token=token)
-
             verify_link = request.build_absolute_uri(f'/verify_email/{token}/')
             try:
                 send_mail(
                     subject='Verify your email - Payroll Management',
-                    message=f'Hi {user.username},\n\nPlease verify your email by clicking this link:\n{verify_link}\n\nAfter verification, an administrator will review and approve your account before you can log in.',
+                    message=f'Hi {username},\n\nPlease verify your email by clicking this link:\n{verify_link}\n\nAfter verification, an administrator will review and approve your account before you can log in.',
                     from_email=django_settings.EMAIL_HOST_USER,
                     recipient_list=[user.email],
                     fail_silently=False,
@@ -971,9 +940,8 @@ def register_view(request):
             except Exception as e:
                 messages.warning(request, f"Account created but verification email failed to send: {str(e)}. Contact admin.")
             return redirect('login')
-    else:
-        form = UserCreationForm()
-    return render(request, 'register.html', {'form': form})
+
+    return render(request, 'register.html', {'error': error})
 
 
 def verify_email(request, token):
@@ -988,3 +956,15 @@ def verify_email(request, token):
     record.save()
     messages.success(request, "Email verified successfully! Your account is now pending admin approval. You'll be able to log in once approved.")
     return redirect('login')
+
+
+def landing_page(request):
+    return render(request, 'Landing.html')
+
+
+
+
+
+
+
+

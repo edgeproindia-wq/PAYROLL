@@ -10,6 +10,7 @@ class EmployeeManager(models.Manager):
 
 
 class Employee(models.Model):
+    user = models.OneToOneField('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='employee_profile')
     EMPLOYMENT_STATUS_CHOICES = [
         ('ACTIVE', 'Active'),
         ('ON_LEAVE', 'On Leave'),
@@ -404,3 +405,4 @@ class EmailVerificationToken(models.Model):
 
     def __str__(self):
         return f"Token for {self.user.username}"
+
