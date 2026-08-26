@@ -73,8 +73,7 @@ urlpatterns += [
     path("logout/", logout_view, name="logout"),
     path("verify_email/<str:token>/", views.verify_email, name="verify_email"),
     path("send_verification_code/", views.send_verification_code, name="send_verification_code"),
-    path("send_verification_code/", views.send_verification_code, name="send_verification_code"),
-    path("send_verification_code/", views.send_verification_code, name="send_verification_code"),
+    path("verify_code/", views.verify_code, name="verify_code"),
     path("request_demo/", views.request_demo, name="request_demo"),
 ]
 

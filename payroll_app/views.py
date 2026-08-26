@@ -2,7 +2,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from decimal import Decimal
-from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement, EmailVerificationToken, EmailOTPVerification, EmailOTPVerification
+from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement, EmailVerificationToken, EmailOTPVerification
 from .forms import EmployeeForm, SalaryStructureForm, AttendanceForm, LeaveRequestForm, ReimbursementForm, PayrollRunForm
 from .models import PayrollRun, PayrollRunLine, InvestmentDeclaration
 import csv
@@ -916,6 +916,8 @@ def register_view(request):
             error = "That username is already taken."
         elif User.objects.filter(email__iexact=email).exists():
             error = "That email is already registered."
+        elif not EmailOTPVerification.objects.filter(email__iexact=email, is_verified=True).exists():
+            error = "Please verify your email address before creating an account."
         elif len(password) < 8:
             error = "Password must be at least 8 characters long."
         elif password != password2:
@@ -924,17 +926,13 @@ def register_view(request):
             user = User.objects.create_user(username=username, email=email, password=password)
             user.is_active = False
             user.save()
-
-            token = secrets.token_urlsafe(32)
-            EmailVerificationToken.objects.create(user=user, token=token)
-            verify_link = request.build_absolute_uri(f'/verify_email/{token}/')
             try:
                 send_mail(
-                    subject='Verify your email - Payroll Management',
-                    message=f'Hi {username},\n\nPlease verify your email by clicking this link:\n{verify_link}\n\nAfter verification, an administrator will review and approve your account before you can log in.',
+                    subject='Registration received - Payroll Management',
+                    message=f'Hi {username},\n\nYour email has been verified and your registration was received. An administrator will review and approve your account before you can log in.',
                     from_email=django_settings.EMAIL_HOST_USER,
                     recipient_list=[user.email],
-                    fail_silently=False,
+                    fail_silently=True,
                 )
                 messages.success(request, "Registration submitted! Please check your email to verify your account. After verification, an admin will approve your access.")
             except Exception as e:
@@ -1025,3 +1023,45 @@ def send_verification_code(request):
         return JsonResponse({'success': False, 'message': 'Failed to send verification email. Please try again.'})
 
 
+
+
+def verify_code(request):
+    import json
+    from django.contrib.auth.hashers import check_password
+    from django.utils import timezone
+    from django.http import JsonResponse
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        data = request.POST
+
+    email = data.get('email', '').strip().lower()
+    code = data.get('code', '').strip()
+
+    if not email or not code:
+        return JsonResponse({'success': False, 'message': 'Email and code are required.'})
+
+    otp_record = EmailOTPVerification.objects.filter(email__iexact=email, is_verified=False).order_by('-created_at').first()
+
+    if not otp_record:
+        return JsonResponse({'success': False, 'message': 'No pending verification found for this email. Please request a new code.'})
+
+    if timezone.now() > otp_record.expires_at:
+        return JsonResponse({'success': False, 'message': 'This code has expired. Please request a new one.'})
+
+    if otp_record.attempts >= 5:
+        return JsonResponse({'success': False, 'message': 'Too many incorrect attempts. Please request a new code.'})
+
+    if not check_password(code, otp_record.otp_hash):
+        otp_record.attempts += 1
+        otp_record.save()
+        remaining = 5 - otp_record.attempts
+        return JsonResponse({'success': False, 'message': f'Incorrect code. {remaining} attempt(s) remaining.'})
+
+    otp_record.is_verified = True
+    otp_record.save()
+    return JsonResponse({'success': True, 'message': 'Email verified successfully.'})

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -6,9 +6,17 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
   body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; height:100vh; display:flex; align-items:center; justify-content:center; }
-  .login-card { background:#fff; border-radius:12px; padding:2.5rem; width:100%; max-width:400px; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+  .login-card { background:#fff; border-radius:12px; padding:2.5rem; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
   .login-card h1 { font-size:1.4rem; font-weight:700; margin-bottom:0.2rem; }
   .login-card p.sub { color:#64748b; font-size:13px; margin-bottom:1.5rem; }
+  .verified-badge { display:none; background:#e5f8f1; color:#0f9d6a; padding:8px 12px; border-radius:8px; font-size:13px; font-weight:600; margin-bottom:1rem; }
+  .otp-section { display:none; }
+  .locked-field { background:#f1f3f5; }
+  #accountFields { opacity:0.4; pointer-events:none; }
+  #accountFields.enabled { opacity:1; pointer-events:auto; }
+  .msg { font-size:12.5px; margin-top:6px; min-height:16px; }
+  .msg.err { color:#dc3545; }
+  .msg.ok { color:#0f9d6a; }
 </style>
 </head>
 <body>
@@ -38,23 +46,154 @@
     {% if error %}
     <div class="alert alert-danger py-2 small">{{ error }}</div>
     {% endif %}
-    <form method="post">
+
+    <div id="verifiedBadge" class="verified-badge">&#10003; Email Verified Successfully</div>
+
+    <form method="post" id="registerForm">
       {% csrf_token %}
+
       <div class="mb-3">
-        <label class="form-label small">Choose Username</label>
-        <input type="text" name="username" class="form-control" required autofocus>
+        <label class="form-label small">Email Address</label>
+        <div class="input-group">
+          <input type="email" id="emailInput" name="email" class="form-control" required autofocus>
+          <button type="button" id="sendCodeBtn" class="btn btn-outline-primary">Send OTP</button>
+        </div>
+        <div id="emailMsg" class="msg"></div>
       </div>
-      <div class="mb-3">
-        <label class="form-label small">Password</label>
-        <input type="password" name="password" class="form-control" required>
+
+      <div class="mb-3 otp-section" id="otpSection">
+        <label class="form-label small">Enter Verification OTP</label>
+        <div class="input-group">
+          <input type="text" id="otpInput" maxlength="6" class="form-control" placeholder="6-digit code">
+          <button type="button" id="verifyBtn" class="btn btn-outline-success">Verify OTP</button>
+        </div>
+        <div id="otpMsg" class="msg"></div>
+        <button type="button" id="resendBtn" class="btn btn-link btn-sm p-0 mt-1">Resend Code</button>
       </div>
-      <div class="mb-3">
-        <label class="form-label small">Confirm Password</label>
-        <input type="password" name="password2" class="form-control" required>
+
+      <div id="accountFields">
+        <div class="mb-3">
+          <label class="form-label small">Choose Username</label>
+          <input type="text" name="username" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small">Password</label>
+          <input type="password" name="password" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small">Confirm Password</label>
+          <input type="password" name="password2" class="form-control" required>
+        </div>
+        <button type="submit" id="submitBtn" class="btn btn-primary w-100" disabled>Create Account</button>
       </div>
-      <button type="submit" class="btn btn-primary w-100">Create Account</button>
     </form>
     <p class="text-center small mt-3 mb-0"><a href="{% url 'login' %}">Already have an account? Sign in</a></p>
   </div>
+
+<script>
+(function(){
+  function getCookie(name) {
+    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+  }
+  const csrftoken = getCookie('csrftoken');
+  const emailInput = document.getElementById('emailInput');
+  const sendCodeBtn = document.getElementById('sendCodeBtn');
+  const emailMsg = document.getElementById('emailMsg');
+  const otpSection = document.getElementById('otpSection');
+  const otpInput = document.getElementById('otpInput');
+  const verifyBtn = document.getElementById('verifyBtn');
+  const otpMsg = document.getElementById('otpMsg');
+  const resendBtn = document.getElementById('resendBtn');
+  const verifiedBadge = document.getElementById('verifiedBadge');
+  const accountFields = document.getElementById('accountFields');
+  const submitBtn = document.getElementById('submitBtn');
+  let verifiedEmail = null;
+  let cooldown = false;
+
+  function sendCode(){
+    const email = emailInput.value.trim();
+    if (!email) { emailMsg.textContent = 'Please enter your email address.'; emailMsg.className = 'msg err'; return; }
+    if (cooldown) return;
+    sendCodeBtn.disabled = true;
+    sendCodeBtn.textContent = 'Sending...';
+    fetch('{% url "send_verification_code" %}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrftoken},
+      body: JSON.stringify({email: email})
+    })
+    .then(r => r.json())
+    .then(data => {
+      sendCodeBtn.disabled = false;
+      sendCodeBtn.textContent = 'Send OTP';
+      if (data.success) {
+        emailMsg.textContent = data.message;
+        emailMsg.className = 'msg ok';
+        otpSection.style.display = 'block';
+        emailInput.readOnly = true;
+        emailInput.classList.add('locked-field');
+        cooldown = true;
+        setTimeout(() => { cooldown = false; }, 60000);
+      } else {
+        emailMsg.textContent = data.message;
+        emailMsg.className = 'msg err';
+      }
+    })
+    .catch(() => {
+      sendCodeBtn.disabled = false;
+      sendCodeBtn.textContent = 'Send OTP';
+      emailMsg.textContent = 'Something went wrong. Please try again.';
+      emailMsg.className = 'msg err';
+    });
+  }
+
+  function verifyCode(){
+    const email = emailInput.value.trim();
+    const code = otpInput.value.trim();
+    if (!code) { otpMsg.textContent = 'Please enter the verification code.'; otpMsg.className = 'msg err'; return; }
+    verifyBtn.disabled = true;
+    verifyBtn.textContent = 'Verifying...';
+    fetch('{% url "verify_code" %}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrftoken},
+      body: JSON.stringify({email: email, code: code})
+    })
+    .then(r => r.json())
+    .then(data => {
+      verifyBtn.disabled = false;
+      verifyBtn.textContent = 'Verify OTP';
+      if (data.success) {
+        otpMsg.textContent = '';
+        verifiedBadge.style.display = 'block';
+        otpSection.style.display = 'none';
+        accountFields.classList.add('enabled');
+        submitBtn.disabled = false;
+        verifiedEmail = email;
+      } else {
+        otpMsg.textContent = data.message;
+        otpMsg.className = 'msg err';
+      }
+    })
+    .catch(() => {
+      verifyBtn.disabled = false;
+      verifyBtn.textContent = 'Verify OTP';
+      otpMsg.textContent = 'Something went wrong. Please try again.';
+      otpMsg.className = 'msg err';
+    });
+  }
+
+  sendCodeBtn.addEventListener('click', sendCode);
+  verifyBtn.addEventListener('click', verifyCode);
+  resendBtn.addEventListener('click', function(e){ e.preventDefault(); sendCode(); });
+
+  document.getElementById('registerForm').addEventListener('submit', function(e){
+    if (!verifiedEmail) {
+      e.preventDefault();
+      emailMsg.textContent = 'Please verify your email before creating an account.';
+      emailMsg.className = 'msg err';
+    }
+  });
+})();
+</script>
 </body>
 </html>
