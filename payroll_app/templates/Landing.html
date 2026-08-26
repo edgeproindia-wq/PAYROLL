@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿{% load static %}
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -95,10 +96,30 @@
 </style>
 </head>
 <body>
+<div id="animatedBg" style="position:fixed;inset:0;z-index:-1;pointer-events:none;transition:background 0.4s cubic-bezier(0.1,0.4,0.2,1);"></div>
+<script>
+(function(){
+  const bg = document.getElementById("animatedBg");
+  function setBg(mx, my, a, h){
+    bg.style.background =
+      "linear-gradient(" + a + "deg, hsla(" + h + ",35%,85%,0.5) 0%, hsla(" + (h+40) + ",30%,80%,0.35) 50%, hsla(" + (h+80) + ",35%,85%,0.5) 100%)," +
+      "radial-gradient(circle at " + mx + "% " + my + "%, hsl(" + (h-20) + ",40%,92%) 0%, hsl(" + h + ",30%,80%) 50%, hsl(" + (h+40) + ",25%,72%) 100%)";
+  }
+  setBg(50, 50, 45, 200);
+  window.addEventListener("mousemove", function(e){
+    const xPercent = Math.round((e.clientX / window.innerWidth) * 100);
+    const yPercent = Math.round((e.clientY / window.innerHeight) * 100);
+    const a = Math.round((e.clientX / window.innerWidth) * 180 + (e.clientY / window.innerHeight) * 180);
+    const h = Math.round((e.clientX / window.innerWidth) * 100 + 180);
+    setBg(xPercent, yPercent, a, h);
+  });
+})();
+</script>
+
 
 <nav class="navbar">
   <div class="container nav-inner">
-    <div class="nav-logo">&#9635; <span>Payroll</span>Management</div>
+    <div class="nav-logo"><img src="{% static 'images/edgepro-logo.png' %}" alt="EdgePro Axis" style="height:28px;display:block;"></div>
     <div class="nav-links">
       <a href="#features">Features</a>
       <a href="#modules">Modules</a>
@@ -254,7 +275,7 @@
   <div class="container">
     <div class="footer-grid">
       <div>
-        <div class="nav-logo" style="color:#fff;">&#9635; <span>Payroll</span>Management</div>
+        <div class="nav-logo"><img src="{% static 'images/edgepro-logo.png' %}" alt="EdgePro Axis" style="height:26px;display:block;background:#fff;border-radius:6px;padding:4px 8px;"></div>
         <p style="font-size:13.5px;margin-top:14px;max-width:280px;">A modern payroll and HR platform built to simplify employee and salary management for growing teams.</p>
       </div>
       <div>

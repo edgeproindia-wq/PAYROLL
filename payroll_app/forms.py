@@ -51,6 +51,19 @@ class PayrollRunForm(forms.ModelForm):
         model = PayrollRun
         fields = ['month']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from datetime import date
+        today = date.today()
+        choices = []
+        for offset in range(-3, 12):
+            month_num = today.month + offset
+            year = today.year + (month_num - 1) // 12
+            month_num = ((month_num - 1) % 12) + 1
+            label = date(year, month_num, 1).strftime('%B %Y')
+            choices.append((label, label))
+        self.fields['month'].widget = forms.Select(choices=choices)
+
 
 class ArrearsForm(forms.ModelForm):
     class Meta:
@@ -113,4 +126,5 @@ class DemoRequestForm(forms.ModelForm):
     class Meta:
         model = DemoRequest
         fields = ['full_name', 'company_name', 'email', 'phone', 'message']
+
 
