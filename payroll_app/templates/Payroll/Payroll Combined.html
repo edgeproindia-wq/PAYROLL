@@ -1,5 +1,5 @@
-﻿{% extends "base.html" %}
-{% block title %}Payroll Processing Â· Payroll{% endblock %}
+{% extends "base.html" %}
+{% block title %}Payroll Processing · Payroll{% endblock %}
 {% block content %}
 
 <div class="page-header">
@@ -51,7 +51,6 @@
                 {% else %}
                   <form method="post" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="lock"><input type="hidden" name="run_id" value="{{ run.pk }}"><button class="btn btn-outline btn-sm">Lock</button></form>
                   <form method="post" style="display:inline;" onsubmit="return confirm('Reprocess {{ run.month|escapejs }}? Existing lines will be recalculated.');">{% csrf_token %}<input type="hidden" name="action" value="reprocess"><input type="hidden" name="run_id" value="{{ run.pk }}"><button class="btn btn-outline btn-sm">Reprocess</button></form>
-                  <form method="post" style="display:inline;" onsubmit="return confirm('Delete {{ run.month|escapejs }} permanently? This cannot be undone.');">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="run_id" value="{{ run.pk }}"><button class="btn btn-danger btn-sm">Delete</button></form>
                   <form method="post" style="display:inline;" onsubmit="return confirm('Delete {{ run.month|escapejs }} permanently? This cannot be undone.');">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="run_id" value="{{ run.pk }}"><button class="btn btn-danger btn-sm">Delete</button></form>
                 {% endif %}
               {% endif %}
