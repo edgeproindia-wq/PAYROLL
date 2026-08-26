@@ -2,7 +2,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from decimal import Decimal
-from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement, EmailVerificationToken
+from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement, EmailVerificationToken, EmailOTPVerification, EmailOTPVerification
 from .forms import EmployeeForm, SalaryStructureForm, AttendanceForm, LeaveRequestForm, ReimbursementForm, PayrollRunForm
 from .models import PayrollRun, PayrollRunLine, InvestmentDeclaration
 import csv
@@ -966,5 +966,62 @@ def landing_page(request):
 
 
 
+
+
+
+
+def send_verification_code(request):
+    import json
+    import random
+    from django.contrib.auth.hashers import make_password
+    from django.contrib.auth.models import User
+    from django.core.mail import send_mail
+    from django.conf import settings as django_settings
+    from django.utils import timezone
+    from datetime import timedelta
+    from django.http import JsonResponse
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        data = request.POST
+
+    email = data.get('email', '').strip().lower()
+
+    if not email or '@' not in email or '.' not in email.split('@')[-1]:
+        return JsonResponse({'success': False, 'message': 'Please enter a valid email address.'})
+
+    if User.objects.filter(email__iexact=email).exists():
+        return JsonResponse({'success': False, 'message': 'This email is already registered. Please sign in instead.'})
+
+    existing = EmailOTPVerification.objects.filter(email__iexact=email).order_by('-last_sent_at').first()
+    if existing and (timezone.now() - existing.last_sent_at).total_seconds() < 60:
+        wait = 60 - int((timezone.now() - existing.last_sent_at).total_seconds())
+        return JsonResponse({'success': False, 'message': f'Please wait {wait} seconds before requesting another code.'})
+
+    code = str(random.randint(100000, 999999))
+    otp_record = EmailOTPVerification.objects.create(
+        email=email,
+        otp_hash=make_password(code),
+        expires_at=timezone.now() + timedelta(minutes=10),
+        attempts=0,
+        is_verified=False,
+    )
+
+    try:
+        send_mail(
+            subject='Your verification code - Payroll Management',
+            message=f'Your verification code is: {code}\n\nThis code will expire in 10 minutes.\n\nIf you did not request this, please ignore this email.',
+            from_email=django_settings.EMAIL_HOST_USER,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        return JsonResponse({'success': True, 'message': 'Verification code sent to your email.'})
+    except Exception as e:
+        otp_record.delete()
+        return JsonResponse({'success': False, 'message': 'Failed to send verification email. Please try again.'})
 
 

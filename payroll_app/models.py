@@ -406,3 +406,16 @@ class EmailVerificationToken(models.Model):
     def __str__(self):
         return f"Token for {self.user.username}"
 
+
+
+class EmailOTPVerification(models.Model):
+    email = models.EmailField()
+    otp_hash = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    last_sent_at = models.DateTimeField(auto_now_add=True)
+    attempts = models.IntegerField(default=0)
+    is_verified = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"OTP for {self.email} (verified={self.is_verified})"
