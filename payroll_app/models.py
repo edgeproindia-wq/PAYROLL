@@ -419,3 +419,22 @@ class EmailOTPVerification(models.Model):
 
     def __str__(self):
         return f"OTP for {self.email} (verified={self.is_verified})"
+
+
+class UserRegistrationStatus(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('ACTIVE', 'Active'),
+        ('REJECTED', 'Rejected'),
+    ]
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='registration_status')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    rejection_reason = models.TextField(blank=True)
+    activated_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='activated_users')
+    activated_at = models.DateTimeField(null=True, blank=True)
+    rejected_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='rejected_users')
+    rejected_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.status}"

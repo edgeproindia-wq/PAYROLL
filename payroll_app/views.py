@@ -2,7 +2,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from decimal import Decimal
-from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement, EmailVerificationToken, EmailOTPVerification
+from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement, EmailVerificationToken, EmailOTPVerification, UserRegistrationStatus
 from .forms import EmployeeForm, SalaryStructureForm, AttendanceForm, LeaveRequestForm, ReimbursementForm, PayrollRunForm
 from .models import PayrollRun, PayrollRunLine, InvestmentDeclaration
 import csv
@@ -855,6 +855,21 @@ from .forms import RegisterForm
 class CustomLoginView(LoginView):
     template_name = "login.html"
 
+    def form_invalid(self, form):
+        username = self.request.POST.get("username", "").strip()
+        from django.contrib.auth.models import User
+        user = User.objects.filter(username__iexact=username).first()
+        if user:
+            reg_status = UserRegistrationStatus.objects.filter(user=user).first()
+            if reg_status and reg_status.status == "PENDING":
+                messages.error(self.request, "Your account is awaiting administrator approval.")
+                return redirect("login")
+            elif reg_status and reg_status.status == "REJECTED":
+                reason = f" Reason: {reg_status.rejection_reason}" if reg_status.rejection_reason else ""
+                messages.error(self.request, f"Your account registration was rejected.{reason} Please contact the administrator.")
+                return redirect("login")
+        return super().form_invalid(form)
+
 def logout_view(request):
     logout(request)
     return redirect("login")
@@ -926,6 +941,7 @@ def register_view(request):
             user = User.objects.create_user(username=username, email=email, password=password)
             user.is_active = False
             user.save()
+            UserRegistrationStatus.objects.create(user=user, status="PENDING")
             try:
                 send_mail(
                     subject='Registration received - Payroll Management',
