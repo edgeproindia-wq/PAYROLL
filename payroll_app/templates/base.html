@@ -285,8 +285,19 @@
         <a href="{% url 'notifications' %}">Notifications</a>
         <a href="{% url 'user_roles_permissions' %}">User Roles &amp; Permissions</a>
         <a href="{% url 'settings' %}">Settings</a>
+        <a href="{% url 'approval_center' %}">Approval Center</a>
+        <a href="{% url 'pending_registrations' %}">Pending Registrations</a>
       </div>
     </div>
+    {% if request.user.is_authenticated %}
+    <div style="margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <span style="color:#fff; font-size:13px; font-weight:600;">{{ request.user.username }}</span>
+      <form method="post" action="{% url 'logout' %}" style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" style="background:none; border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; font-size:11px; padding:5px 10px; border-radius:6px; cursor:pointer;">Logout</button>
+      </form>
+    </div>
+    {% endif %}
   </div>
 
   <script>

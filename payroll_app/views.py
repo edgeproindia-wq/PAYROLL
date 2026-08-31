@@ -983,6 +983,16 @@ def register_view(request):
             UserRegistrationStatus.objects.create(user=user, status="PENDING")
             try:
                 send_mail(
+                    subject='New Registration Pending Approval',
+                    message=f'A new user has registered and is awaiting approval.\n\nUsername: {username}\nEmail: {email}\n\nReview and activate this account at: {request.build_absolute_uri("/admin/auth/user/")}',
+                    from_email=django_settings.EMAIL_HOST_USER,
+                    recipient_list=['jaganbharath46@gmail.com'],
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
+            try:
+                send_mail(
                     subject='Registration received - Payroll Management',
                     message=f'Hi {username},\n\nYour email has been verified and your registration was received. An administrator will review and approve your account before you can log in.',
                     from_email=django_settings.EMAIL_HOST_USER,
@@ -1206,3 +1216,45 @@ def add_bank_details(request, pk):
         return redirect('bank_transfer')
 
     return render(request, 'Add Bank Details.html', {'employee': employee})
+
+
+def pending_registrations(request):
+    pending = UserRegistrationStatus.objects.select_related('user').filter(status='PENDING').order_by('-created_at')
+    return render(request, 'Pending Registrations.html', {'pending': pending})
+
+
+def approve_registration(request, pk):
+    if request.method == 'POST':
+        reg = get_object_or_404(UserRegistrationStatus, pk=pk)
+        if reg.status != 'PENDING':
+            messages.error(request, "This registration has already been processed.")
+            return redirect('pending_registrations')
+        from django.utils import timezone
+        reg.status = 'ACTIVE'
+        reg.activated_by = request.user if request.user.is_authenticated else None
+        reg.activated_at = timezone.now()
+        reg.save()
+        reg.user.is_active = True
+        reg.user.save()
+        messages.success(request, f"{reg.user.username} has been approved and can now log in.")
+    return redirect('pending_registrations')
+
+
+def reject_registration(request, pk):
+    if request.method == 'POST':
+        reg = get_object_or_404(UserRegistrationStatus, pk=pk)
+        reason = request.POST.get('rejection_reason', '').strip()
+        if not reason:
+            messages.error(request, "A rejection reason is required.")
+            return redirect('pending_registrations')
+        if reg.status != 'PENDING':
+            messages.error(request, "This registration has already been processed.")
+            return redirect('pending_registrations')
+        from django.utils import timezone
+        reg.status = 'REJECTED'
+        reg.rejection_reason = reason
+        reg.rejected_by = request.user if request.user.is_authenticated else None
+        reg.rejected_at = timezone.now()
+        reg.save()
+        messages.success(request, f"{reg.user.username}'s registration has been rejected.")
+    return redirect('pending_registrations')

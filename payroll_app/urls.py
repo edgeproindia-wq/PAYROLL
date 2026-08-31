@@ -77,6 +77,12 @@ urlpatterns += [
     path("send_verification_code/", views.send_verification_code, name="send_verification_code"),
     path("verify_code/", views.verify_code, name="verify_code"),
     path("request_demo/", views.request_demo, name="request_demo"),
+    path("approval_center/", views.approval_center, name="approval_center"),
+    path("approve_leave/<int:pk>/", views.approve_leave, name="approve_leave"),
+    path("reject_leave/<int:pk>/", views.reject_leave, name="reject_leave"),
+    path("pending_registrations/", views.pending_registrations, name="pending_registrations"),
+    path("approve_registration/<int:pk>/", views.approve_registration, name="approve_registration"),
+    path("reject_registration/<int:pk>/", views.reject_registration, name="reject_registration"),
 ]
 
 
