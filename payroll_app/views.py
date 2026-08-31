@@ -1,5 +1,6 @@
 ﻿from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from decimal import Decimal
 from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement, EmailVerificationToken, EmailOTPVerification, UserRegistrationStatus
@@ -1218,11 +1219,13 @@ def add_bank_details(request, pk):
     return render(request, 'Add Bank Details.html', {'employee': employee})
 
 
+@staff_member_required
 def pending_registrations(request):
     pending = UserRegistrationStatus.objects.select_related('user').filter(status='PENDING').order_by('-created_at')
     return render(request, 'Pending Registrations.html', {'pending': pending})
 
 
+@staff_member_required
 def approve_registration(request, pk):
     if request.method == 'POST':
         reg = get_object_or_404(UserRegistrationStatus, pk=pk)
@@ -1240,6 +1243,7 @@ def approve_registration(request, pk):
     return redirect('pending_registrations')
 
 
+@staff_member_required
 def reject_registration(request, pk):
     if request.method == 'POST':
         reg = get_object_or_404(UserRegistrationStatus, pk=pk)
