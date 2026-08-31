@@ -38,6 +38,12 @@ class Employee(models.Model):
     aadhar_number = models.CharField(max_length=12, blank=True)
     bank_account_no = models.CharField(max_length=30, blank=True)
     ifsc_code = models.CharField(max_length=11, blank=True)
+    bank_name = models.CharField(max_length=100, blank=True)
+    account_holder_name = models.CharField(max_length=150, blank=True)
+    branch_name = models.CharField(max_length=150, blank=True)
+    ACCOUNT_TYPE_CHOICES = [('SAVINGS', 'Savings'), ('CURRENT', 'Current')]
+    account_type = models.CharField(max_length=10, choices=ACCOUNT_TYPE_CHOICES, blank=True)
+    upi_id = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -126,6 +132,9 @@ class LeaveRequest(models.Model):
     to_date = models.DateField()
     reason = models.CharField(max_length=255, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    approved_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_leaves')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True)
 
     class Meta:
         ordering = ['-from_date']

@@ -46,6 +46,8 @@ urlpatterns = [
     path('full_final_settlement/', views.full_final_settlement, name='full_final_settlement'),
 
     path('bank_transfer/', views.bank_transfer, name='bank_transfer'),
+    path('bank_transfer/add_bank_details/<int:pk>/', views.add_bank_details, name='add_bank_details'),
+    path('bank_transfer/employee/<int:pk>/', views.bank_transfer_employee_detail, name='bank_transfer_employee_detail'),
     path('bank_transfer/download_pdf/', views.download_pdf, name='download_pdf'),
     path('bank_transfer/failed_transaction_report/', views.failed_transaction_report, name='failed_transaction_report'),
     path('bank_transfer/payment_states/', views.payment_states, name='payment_states'),

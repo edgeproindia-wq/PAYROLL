@@ -1,0 +1,70 @@
+﻿{% extends "base.html" %}
+{% block title %}Add Bank Details · Payroll{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Add Bank Details</h1>
+    <p class="page-subtitle">{{ employee.full_name }} &middot; {{ employee.employee_code }}</p>
+  </div>
+</div>
+
+<div class="card" style="max-width:640px;">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="field">
+          <label>Employee Name</label>
+          <input type="text" value="{{ employee.full_name }}" disabled>
+        </div>
+        <div class="field">
+          <label>Employee ID</label>
+          <input type="text" value="{{ employee.employee_code }}" disabled>
+        </div>
+        <div class="field">
+          <label>Bank Name</label>
+          <input type="text" name="bank_name" required value="{{ employee.bank_name }}">
+        </div>
+        <div class="field">
+          <label>Account Holder Name</label>
+          <input type="text" name="account_holder_name" required value="{{ employee.account_holder_name }}">
+        </div>
+        <div class="field">
+          <label>Account Number</label>
+          <input type="text" name="account_number" required value="{{ employee.bank_account_no }}">
+        </div>
+        <div class="field">
+          <label>Confirm Account Number</label>
+          <input type="text" name="confirm_account_number" required>
+        </div>
+        <div class="field">
+          <label>IFSC Code</label>
+          <input type="text" name="ifsc_code" required maxlength="11" style="text-transform:uppercase;" value="{{ employee.ifsc_code }}">
+        </div>
+        <div class="field">
+          <label>Branch Name</label>
+          <input type="text" name="branch_name" value="{{ employee.branch_name }}">
+        </div>
+        <div class="field">
+          <label>Account Type</label>
+          <select name="account_type" required>
+            <option value="">Select type</option>
+            <option value="SAVINGS" {% if employee.account_type == 'SAVINGS' %}selected{% endif %}>Savings</option>
+            <option value="CURRENT" {% if employee.account_type == 'CURRENT' %}selected{% endif %}>Current</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>UPI ID (Optional)</label>
+          <input type="text" name="upi_id" value="{{ employee.upi_id }}">
+        </div>
+      </div>
+      <div class="form-actions" style="margin-top:16px;">
+        <a href="{% url 'bank_transfer' %}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save Bank Details</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

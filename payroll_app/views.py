@@ -627,7 +627,46 @@ def payslips(request):
 
 def bank_transfer(request):
     lines = PayrollRunLine.objects.select_related('employee', 'payroll_run').filter(payroll_run__status='RELEASED')
-    return render(request, 'Bank Transfer.html', {'lines': lines})
+
+    selected_bank = request.GET.get('bank', '').strip()
+    if selected_bank:
+        lines = lines.filter(employee__bank_name__iexact=selected_bank)
+
+    available_banks = (
+        Employee.objects.exclude(bank_name='').values_list('bank_name', flat=True).distinct().order_by('bank_name')
+    )
+
+    def mask_account(acc):
+        if not acc or len(acc) < 4:
+            return 'XXXXXXXX'
+        return 'X' * (len(acc) - 4) + acc[-4:]
+
+    for line in lines:
+        line.masked_account = mask_account(line.employee.bank_account_no)
+
+    context = {
+        'lines': lines,
+        'available_banks': available_banks,
+        'selected_bank': selected_bank,
+    }
+    return render(request, 'Bank Transfer.html', context)
+
+
+def bank_transfer_employee_detail(request, pk):
+    from django.http import JsonResponse
+    line = get_object_or_404(PayrollRunLine.objects.select_related('employee', 'payroll_run'), pk=pk)
+    emp = line.employee
+    acc = emp.bank_account_no or ''
+    masked = ('X' * (len(acc) - 4) + acc[-4:]) if len(acc) >= 4 else 'Not on file'
+    return JsonResponse({
+        'employee_name': emp.full_name,
+        'employee_code': emp.employee_code,
+        'bank_name': emp.bank_name or 'Not on file',
+        'account_number_masked': masked,
+        'ifsc_code': emp.ifsc_code or 'Not on file',
+        'payable_salary': str(line.net_pay),
+        'payroll_month': line.payroll_run.month,
+    })
 
 
 def reports_analytics(request):
@@ -1081,3 +1120,89 @@ def verify_code(request):
     otp_record.is_verified = True
     otp_record.save()
     return JsonResponse({'success': True, 'message': 'Email verified successfully.'})
+
+
+def approval_center(request):
+    pending_leaves = LeaveRequest.objects.select_related('employee').filter(status='PENDING').order_by('-id')
+    return render(request, 'Approval Center.html', {'pending_leaves': pending_leaves})
+
+
+def approve_leave(request, pk):
+    if request.method == 'POST':
+        leave = get_object_or_404(LeaveRequest, pk=pk)
+        if leave.status != 'PENDING':
+            messages.error(request, f"This leave request is already {leave.get_status_display()}.")
+            return redirect('approval_center')
+        from django.utils import timezone
+        leave.status = 'APPROVED'
+        leave.approved_by = request.user if request.user.is_authenticated else None
+        leave.approved_at = timezone.now()
+        leave.save()
+        messages.success(request, f"Leave request for {leave.employee.full_name} approved.")
+    return redirect('approval_center')
+
+
+def reject_leave(request, pk):
+    if request.method == 'POST':
+        leave = get_object_or_404(LeaveRequest, pk=pk)
+        reason = request.POST.get('rejection_reason', '').strip()
+        if not reason:
+            messages.error(request, "A rejection reason is required.")
+            return redirect('approval_center')
+        if leave.status != 'PENDING':
+            messages.error(request, f"This leave request is already {leave.get_status_display()}.")
+            return redirect('approval_center')
+        from django.utils import timezone
+        leave.status = 'REJECTED'
+        leave.rejection_reason = reason
+        leave.approved_by = request.user if request.user.is_authenticated else None
+        leave.approved_at = timezone.now()
+        leave.save()
+        messages.success(request, f"Leave request for {leave.employee.full_name} rejected.")
+    return redirect('approval_center')
+
+
+def add_bank_details(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+
+    if request.method == 'POST':
+        bank_name = request.POST.get('bank_name', '').strip()
+        account_holder_name = request.POST.get('account_holder_name', '').strip()
+        account_number = request.POST.get('account_number', '').strip()
+        confirm_account_number = request.POST.get('confirm_account_number', '').strip()
+        ifsc_code = request.POST.get('ifsc_code', '').strip().upper()
+        branch_name = request.POST.get('branch_name', '').strip()
+        account_type = request.POST.get('account_type', '').strip()
+        upi_id = request.POST.get('upi_id', '').strip()
+
+        error = None
+        if not bank_name:
+            error = "Bank name is required."
+        elif not account_holder_name:
+            error = "Account holder name is required."
+        elif not account_number:
+            error = "Account number is required."
+        elif account_number != confirm_account_number:
+            error = "Account number and confirmation do not match."
+        elif not ifsc_code or len(ifsc_code) != 11:
+            error = "Please enter a valid 11-character IFSC code."
+        elif account_type not in ('SAVINGS', 'CURRENT'):
+            error = "Please select an account type."
+
+        if error:
+            messages.error(request, error)
+            return render(request, 'Add Bank Details.html', {'employee': employee})
+
+        employee.bank_name = bank_name
+        employee.account_holder_name = account_holder_name
+        employee.bank_account_no = account_number
+        employee.ifsc_code = ifsc_code
+        employee.branch_name = branch_name
+        employee.account_type = account_type
+        employee.upi_id = upi_id
+        employee.save()
+
+        messages.success(request, f"Bank details saved for {employee.full_name}.")
+        return redirect('bank_transfer')
+
+    return render(request, 'Add Bank Details.html', {'employee': employee})

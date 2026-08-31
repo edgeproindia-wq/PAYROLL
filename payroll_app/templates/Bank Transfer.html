@@ -42,7 +42,13 @@
           <td>{{ l.employee.ifsc_code|default:"&mdash;" }}</td>
           <td>{{ l.payroll_run.month }}</td>
           <td style="font-weight:700;color:var(--ink);">&#8377;{{ l.net_pay }}</td>
-          <td><span class="badge {% if l.employee.bank_account_no %}badge-success{% else %}badge-danger{% endif %}">{% if l.employee.bank_account_no %}Ready{% else %}Missing Bank Details{% endif %}</span></td>
+          <td>
+            {% if l.employee.bank_account_no %}
+              <span class="badge badge-success">Ready for Transfer</span>
+            {% else %}
+              <a href="{% url 'add_bank_details' l.employee.pk %}" class="badge badge-danger" style="text-decoration:none;cursor:pointer;" onclick="event.stopPropagation();">Missing Bank Details &rarr; Add</a>
+            {% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>
