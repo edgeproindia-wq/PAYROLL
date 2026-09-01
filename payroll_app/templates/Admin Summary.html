@@ -1,0 +1,92 @@
+﻿{% extends "base.html" %}
+{% block title %}Admin Summary · Payroll{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Admin Summary</h1>
+    <p class="page-subtitle">Overview of everything requiring your attention</p>
+  </div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi-card"><div class="label">Pending Registrations</div><div class="value">{{ pending_registrations_count }}</div></div>
+  <div class="kpi-card"><div class="label">Pending Leave Requests</div><div class="value">{{ pending_leaves_count }}</div></div>
+  <div class="kpi-card"><div class="label">Pending Reimbursements</div><div class="value">{{ pending_reimbursements_count }}</div></div>
+  <div class="kpi-card"><div class="label">Total Employees</div><div class="value">{{ total_employees }}</div></div>
+  <div class="kpi-card"><div class="label">Demo Requests</div><div class="value">{{ total_demo_requests }}</div></div>
+</div>
+
+<div class="grid grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+  <div class="card">
+    <div class="card-header"><h3>Recent Registrations</h3><a href="{% url 'pending_registrations' %}" class="text-sm" style="color:var(--accent);">View All &rarr;</a></div>
+    <div class="table-wrap">
+      {% if recent_registrations %}
+      <table>
+        <thead><tr><th>Username</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for reg in recent_registrations %}
+          <tr>
+            <td>{{ reg.user.username }}</td>
+            <td><span class="badge {% if reg.status == 'PENDING' %}badge-warn{% elif reg.status == 'ACTIVE' %}badge-success{% else %}badge-danger{% endif %}">{{ reg.get_status_display }}</span></td>
+            <td>{{ reg.created_at|date:"d M Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="icon">&#9989;</div><div class="title">No registrations yet</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>Pending Leave Requests</h3><a href="{% url 'approval_center' %}" class="text-sm" style="color:var(--accent);">View All &rarr;</a></div>
+    <div class="table-wrap">
+      {% if recent_leaves %}
+      <table>
+        <thead><tr><th>Employee</th><th>Type</th><th>From</th></tr></thead>
+        <tbody>
+          {% for leave in recent_leaves %}
+          <tr>
+            <td>{{ leave.employee.full_name }}</td>
+            <td>{{ leave.get_leave_type_display }}</td>
+            <td>{{ leave.from_date }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="icon">&#9989;</div><div class="title">No pending leave requests</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card" style="grid-column:1 / -1;">
+    <div class="card-header"><h3>Recent Demo Requests</h3><a href="{% url 'request_demo' %}" class="text-sm" style="color:var(--accent);">View Form &rarr;</a></div>
+    <div class="table-wrap">
+      {% if recent_demo_requests %}
+      <table>
+        <thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for d in recent_demo_requests %}
+          <tr>
+            <td>{{ d.full_name }}</td>
+            <td>{{ d.company_name }}</td>
+            <td>{{ d.email }}</td>
+            <td>{{ d.phone }}</td>
+            <td>{{ d.created_at|date:"d M Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><div class="icon">&#128172;</div><div class="title">No demo requests yet</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

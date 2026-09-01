@@ -1289,3 +1289,28 @@ def reject_registration(request, pk):
         reg.save()
         messages.success(request, f"{reg.user.username}'s registration has been rejected.")
     return redirect('pending_registrations')
+
+
+@staff_member_required
+def admin_summary(request):
+    pending_registrations_count = UserRegistrationStatus.objects.filter(status='PENDING').count()
+    pending_leaves_count = LeaveRequest.objects.filter(status='PENDING').count()
+    pending_reimbursements_count = Reimbursement.objects.filter(status='PENDING').count()
+    total_employees = Employee.objects.count()
+    total_demo_requests = DemoRequest.objects.count()
+
+    recent_registrations = UserRegistrationStatus.objects.select_related('user').order_by('-created_at')[:5]
+    recent_leaves = LeaveRequest.objects.filter(status='PENDING').select_related('employee').order_by('-id')[:5]
+    recent_demo_requests = DemoRequest.objects.order_by('-created_at')[:5]
+
+    context = {
+        'pending_registrations_count': pending_registrations_count,
+        'pending_leaves_count': pending_leaves_count,
+        'pending_reimbursements_count': pending_reimbursements_count,
+        'total_employees': total_employees,
+        'total_demo_requests': total_demo_requests,
+        'recent_registrations': recent_registrations,
+        'recent_leaves': recent_leaves,
+        'recent_demo_requests': recent_demo_requests,
+    }
+    return render(request, 'Admin Summary.html', context)

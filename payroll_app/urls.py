@@ -83,6 +83,7 @@ urlpatterns += [
     path("pending_registrations/", views.pending_registrations, name="pending_registrations"),
     path("approve_registration/<int:pk>/", views.approve_registration, name="approve_registration"),
     path("reject_registration/<int:pk>/", views.reject_registration, name="reject_registration"),
+    path("admin_summary/", views.admin_summary, name="admin_summary"),
 ]
 
 
