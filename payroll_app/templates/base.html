@@ -282,7 +282,7 @@
         <a href="{% url 'full_final_settlement' %}">Full &amp; Final Settlement</a>
         <a href="{% url 'reports_analytics' %}">Reports &amp; Analytics</a>
         <a href="{% url 'ess' %}">ESS</a>
-        <a href="{% url 'notifications' %}">Notifications</a>
+        <a href="{% url 'notifications' %}">Notifications {% if notification_count %}<span class="badge badge-danger" style="font-size:10px;padding:1px 6px;">{{ notification_count }}</span>{% endif %}</a>
         <a href="{% url 'user_roles_permissions' %}">User Roles &amp; Permissions</a>
         <a href="{% url 'settings' %}">Settings</a>
         <a href="{% url 'approval_center' %}">Approval Center</a>

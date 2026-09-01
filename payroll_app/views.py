@@ -704,6 +704,8 @@ def notifications(request):
         notices.append({'type': 'Reimbursement', 'message': f'{reimb.employee.full_name} submitted a {reimb.get_category_display()} claim of {reimb.amount}', 'date': reimb.date})
     for run in PayrollRun.objects.filter(status='VALIDATED')[:10]:
         notices.append({'type': 'Payroll', 'message': f'{run.month} payroll is validated and awaiting approval', 'date': run.created_at.date()})
+    for reg in UserRegistrationStatus.objects.filter(status='PENDING').select_related('user')[:10]:
+        notices.append({'type': 'Registration', 'message': f'New registration pending approval: {reg.user.username} ({reg.user.email})', 'date': reg.created_at.date()})
     notices.sort(key=lambda n: n['date'], reverse=True)
     return render(request, 'Notifications.html', {'notices': notices})
 
