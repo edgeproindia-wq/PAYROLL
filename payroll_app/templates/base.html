@@ -285,9 +285,11 @@
         <a href="{% url 'notifications' %}">Notifications {% if notification_count %}<span class="badge badge-danger" style="font-size:10px;padding:1px 6px;">{{ notification_count }}</span>{% endif %}</a>
         <a href="{% url 'user_roles_permissions' %}">User Roles &amp; Permissions</a>
         <a href="{% url 'settings' %}">Settings</a>
+        {% if request.user.is_staff %}
         <a href="{% url 'approval_center' %}">Approval Center</a>
         <a href="{% url 'pending_registrations' %}">Pending Registrations</a>
         <a href="{% url 'admin_summary' %}">Admin Summary</a>
+        {% endif %}
       </div>
     </div>
     {% if request.user.is_authenticated %}
