@@ -659,14 +659,39 @@ def bank_transfer_employee_detail(request, pk):
     emp = line.employee
     acc = emp.bank_account_no or ''
     masked = ('X' * (len(acc) - 4) + acc[-4:]) if len(acc) >= 4 else 'Not on file'
+
+    history = PayrollRunLine.objects.filter(employee=emp).exclude(pk=line.pk).select_related('payroll_run').order_by('-payroll_run__id')[:6]
+    history_data = [
+        {'month': h.payroll_run.month, 'status': h.payroll_run.status, 'net_pay': str(h.net_pay)}
+        for h in history
+    ]
+
     return JsonResponse({
         'employee_name': emp.full_name,
         'employee_code': emp.employee_code,
         'bank_name': emp.bank_name or 'Not on file',
         'account_number_masked': masked,
         'ifsc_code': emp.ifsc_code or 'Not on file',
-        'payable_salary': str(line.net_pay),
+        'branch_name': emp.branch_name or 'Not on file',
+        'account_type': emp.get_account_type_display() if emp.account_type else 'Not on file',
         'payroll_month': line.payroll_run.month,
+        'salary_breakdown': {
+            'basic': str(line.basic),
+            'hra': str(line.hra),
+            'special_allowance': str(line.special_allowance),
+            'other_allowances': str(line.other_allowances),
+            'gross_salary': str(line.gross_salary),
+        },
+        'deductions': {
+            'pf_deduction': str(line.pf_deduction),
+            'esi_deduction': str(line.esi_deduction),
+            'professional_tax': str(line.professional_tax),
+            'loan_deduction': str(line.loan_deduction),
+            'insurance_premium': str(line.insurance_premium),
+            'other_deductions': str(line.other_deductions),
+        },
+        'payable_salary': str(line.net_pay),
+        'payroll_history': history_data,
     })
 
 

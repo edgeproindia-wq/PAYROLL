@@ -196,6 +196,15 @@ class PayrollRunLine(models.Model):
     basic = models.DecimalField(max_digits=10, decimal_places=2)
     gross_salary = models.DecimalField(max_digits=10, decimal_places=2)
     net_pay = models.DecimalField(max_digits=10, decimal_places=2)
+    hra = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    special_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    other_allowances = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    pf_deduction = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    esi_deduction = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    professional_tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    loan_deduction = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    insurance_premium = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    other_deductions = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return f"{self.payroll_run} - {self.employee}"
