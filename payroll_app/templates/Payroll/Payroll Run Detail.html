@@ -1,5 +1,5 @@
 ﻿{% extends "base.html" %}
-{% block title %}{{ run.month }} Â· Payroll Run{% endblock %}
+{% block title %}{{ run.month }} · Payroll Run{% endblock %}
 {% block content %}
 
 <div class="breadcrumb no-print"><a href="{% url 'payroll_processing' %}">Payroll Processing</a> / {{ run.month }}</div>
@@ -31,9 +31,9 @@
       <thead><tr><th>Employee Code</th><th>Name</th><th>Basic</th><th>Gross Salary</th><th>Net Pay</th></tr></thead>
       <tbody>
         {% for l in lines %}
-        <tr>
+        <tr class="clickable-row" onclick="showEmployeeDetail({{ l.pk }})" style="cursor:pointer;">
           <td>{{ l.employee.employee_code }}</td>
-          <td class="cell-title">{{ l.employee.full_name }}</td>
+          <td class="cell-title" style="color:var(--accent);">{{ l.employee.full_name }}</td>
           <td>&#8377;{{ l.basic }}</td>
           <td>&#8377;{{ l.gross_salary }}</td>
           <td style="font-weight:700;color:var(--ink);">&#8377;{{ l.net_pay }}</td>
@@ -46,5 +46,47 @@
     {% endif %}
   </div>
 </div>
-{% endblock %}
 
+<div class="modal-overlay" id="empDetailModal">
+  <div class="modal-box" style="max-width:560px;">
+    <div class="modal-head"><h3>Employee Payroll Details</h3><button class="modal-close" onclick="document.getElementById('empDetailModal').classList.remove('open')">&times;</button></div>
+    <div class="modal-body" id="empDetailBody" style="max-height:70vh;overflow-y:auto;">
+      <p class="text-muted">Loading...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function row(label, value, bold){
+    return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line,#e6e9f0);font-size:13px;"><span style="color:var(--muted,#64748b);">' + label + '</span><span style="' + (bold ? 'font-weight:700;' : '') + '">' + value + '</span></div>';
+  }
+  function section(title, rowsHtml){
+    return '<div style="margin-bottom:18px;"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--muted,#64748b);margin-bottom:8px;">' + title + '</div>' + rowsHtml + '</div>';
+  }
+  function showEmployeeDetail(pk){
+    const modal = document.getElementById('empDetailModal');
+    const body = document.getElementById('empDetailBody');
+    body.innerHTML = '<p class="text-muted">Loading...</p>';
+    modal.classList.add('open');
+    fetch('/bank_transfer/employee/' + pk + '/')
+      .then(r => r.json())
+      .then(data => {
+        let html = '';
+        html += section('Employee', row('Name', data.employee_name + ' (' + data.employee_code + ')') + row('Payroll Month', data.payroll_month));
+        html += section('Bank Details', row('Bank Name', data.bank_name) + row('Account Number', data.account_number_masked) + row('IFSC Code', data.ifsc_code) + row('Branch', data.branch_name) + row('Account Type', data.account_type));
+        const s = data.salary_breakdown;
+        html += section('Salary Breakdown', row('Basic', '&#8377;' + s.basic) + row('HRA', '&#8377;' + s.hra) + row('Special Allowance', '&#8377;' + s.special_allowance) + row('Other Allowances', '&#8377;' + s.other_allowances) + row('Gross Salary', '&#8377;' + s.gross_salary, true));
+        const d = data.deductions;
+        html += section('Deductions', row('PF', '&#8377;' + d.pf_deduction) + row('ESI', '&#8377;' + d.esi_deduction) + row('Professional Tax', '&#8377;' + d.professional_tax) + row('Loan', '&#8377;' + d.loan_deduction) + row('Insurance Premium', '&#8377;' + d.insurance_premium) + row('Other Deductions', '&#8377;' + d.other_deductions));
+        html += section('Net Payable', row('Payable Salary', '&#8377;' + data.payable_salary, true));
+        if (data.payroll_history && data.payroll_history.length > 0) {
+          let histRows = '';
+          data.payroll_history.forEach(h => { histRows += row(h.month + ' (' + h.status + ')', '&#8377;' + h.net_pay); });
+          html += section('Payroll History', histRows);
+        }
+        body.innerHTML = html;
+      })
+      .catch(() => { body.innerHTML = '<p style="color:#dc2626;">Failed to load employee details.</p>'; });
+  }
+</script>
+{% endblock %}
