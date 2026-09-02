@@ -1314,3 +1314,22 @@ def admin_summary(request):
         'recent_demo_requests': recent_demo_requests,
     }
     return render(request, 'Admin Summary.html', context)
+
+
+def payroll_dashboard(request):
+    total_employees = Employee.objects.filter(employment_status='ACTIVE').count()
+    employees_on_leave = LeaveRequest.objects.filter(status='APPROVED').count()
+    pending_payroll = PayrollRun.objects.exclude(status='RELEASED').count()
+    salary_generated_count = PayrollRunLine.objects.filter(payroll_run__status='RELEASED').count()
+
+    from django.db.models import Sum
+    total_processed = PayrollRunLine.objects.filter(payroll_run__status='RELEASED').aggregate(total=Sum('net_pay'))['total'] or 0
+
+    context = {
+        'total_employees': total_employees,
+        'total_processed': total_processed,
+        'pending_payroll': pending_payroll,
+        'employees_on_leave': employees_on_leave,
+        'salary_generated_count': salary_generated_count,
+    }
+    return render(request, 'Payroll Dashboard.html', context)
