@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">My Complaints</h1>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'raise_complaint' %}" class="btn btn-primary">+ Raise Complaint</a>
+  </div>
+</div>
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr style="text-align:left; border-bottom:2px solid #e2e8f0;">
+      <th style="padding:8px;">Subject</th>
+      <th style="padding:8px;">Description</th>
+      <th style="padding:8px;">Status</th>
+      <th style="padding:8px;">Admin Response</th>
+      <th style="padding:8px;">Raised On</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in complaints %}
+    <tr style="border-bottom:1px solid #f1f5f9;">
+      <td style="padding:8px;">{{ c.subject }}</td>
+      <td style="padding:8px; max-width:260px;">{{ c.description|truncatewords:20 }}</td>
+      <td style="padding:8px;">{{ c.get_status_display }}</td>
+      <td style="padding:8px;">{{ c.admin_response|default:"-" }}</td>
+      <td style="padding:8px;">{{ c.created_at|date:"d M Y, H:i" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" style="padding:16px; text-align:center; color:#94a3b8;">No complaints raised yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

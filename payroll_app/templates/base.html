@@ -259,6 +259,17 @@
   </div>
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="document.getElementById('mainSidebar').classList.remove('mobile-open'); this.classList.remove('open');"></div>
   <div class="sidebar" id="mainSidebar">
+    {% if request.user.is_staff or request.user.is_superuser %}
+    <h2>ADMIN DASHBOARD</h2>
+    <a href="{% url 'admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">Dashboard</a>
+    <div class="group-title">Client Management</div>
+    <a href="{% url 'pending_registrations' %}" class="{% if request.resolver_match.url_name == 'pending_registrations' %}active{% endif %}">Pending Approvals</a>
+    <a href="{% url 'approval_center' %}" class="{% if request.resolver_match.url_name == 'approval_center' %}active{% endif %}">Client Requests</a>
+    <a href="{% url 'admin_demo_requests' %}" class="{% if request.resolver_match.url_name == 'admin_demo_requests' %}active{% endif %}">Demo / Book Requests</a>
+    <a href="{% url 'admin_client_complaints' %}" class="{% if request.resolver_match.url_name == 'admin_client_complaints' %}active{% endif %}">Client Complaints</a>
+    <a href="{% url 'notifications' %}" class="{% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">Notifications {% if notification_count %}<span class="badge badge-danger" style="font-size:10px;padding:1px 6px;">{{ notification_count }}</span>{% endif %}</a>
+    <a href="{% url 'settings' %}" class="{% if request.resolver_match.url_name == 'settings' %}active{% endif %}">Settings</a>
+    {% else %}
     <h2>PAYROLL MANAGEMENT</h2>
 
     <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
@@ -284,15 +295,12 @@
         <a href="{% url 'ess' %}">ESS</a>
         <a href="{% url 'notifications' %}">Notifications {% if notification_count %}<span class="badge badge-danger" style="font-size:10px;padding:1px 6px;">{{ notification_count }}</span>{% endif %}</a>
         <a href="{% url 'user_roles_permissions' %}">User Roles &amp; Permissions</a>
+        <a href="{% url 'my_complaints' %}">My Complaints</a>
         <a href="{% url 'settings' %}">Settings</a>
-        {% if request.user.is_staff %}
-        <a href="{% url 'approval_center' %}">Client Requests</a>
-        <a href="{% url 'pending_registrations' %}">Client Management</a>
-        <a href="{% url 'admin_summary' %}">Dashboard</a>
         <a href="{% url 'payroll_dashboard' %}">Payroll Dashboard</a>
-        {% endif %}
       </div>
     </div>
+    {% endif %}
     {% if request.user.is_authenticated %}
     <div style="margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:space-between; gap:8px;">
       <span style="color:#fff; font-size:13px; font-weight:600;">{{ request.user.username }}</span>

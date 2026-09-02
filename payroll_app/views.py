@@ -5,7 +5,7 @@ from django.contrib import messages
 from decimal import Decimal
 from .models import Employee, SalaryStructure, Attendance, LeaveRequest, Reimbursement, EmailVerificationToken, EmailOTPVerification, UserRegistrationStatus, DemoRequest
 from .forms import EmployeeForm, SalaryStructureForm, AttendanceForm, LeaveRequestForm, ReimbursementForm, PayrollRunForm
-from .models import PayrollRun, PayrollRunLine, InvestmentDeclaration
+from .models import PayrollRun, PayrollRunLine, InvestmentDeclaration, Client, ClientProfile, ClientComplaint
 import csv
 from django.http import HttpResponse
 
@@ -916,11 +916,24 @@ def payroll_run_download_excel(request, pk):
 
 from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from .forms import RegisterForm
 
 class CustomLoginView(LoginView):
     template_name = "login.html"
+
+    def get_success_url(self):
+        user = self.request.user
+        if user.is_staff or user.is_superuser:
+            return reverse("admin_dashboard")
+        if hasattr(user, "client_profile"):
+            client = user.client_profile.client
+            if client.status == "ACTIVE":
+                return reverse("dashboard")
+            messages.error(self.request, "Your company account is not active. Please contact the administrator.")
+            return reverse("login")
+        return reverse("dashboard")
 
     def form_invalid(self, form):
         username = self.request.POST.get("username", "").strip()
@@ -940,6 +953,110 @@ class CustomLoginView(LoginView):
 def logout_view(request):
     logout(request)
     return redirect("login")
+
+
+from django.contrib.admin.views.decorators import staff_member_required
+from django.utils import timezone
+
+
+def get_client_for_user(user):
+    if hasattr(user, "client_profile"):
+        return user.client_profile.client
+    if hasattr(user, "employee_profile") and user.employee_profile and user.employee_profile.client:
+        return user.employee_profile.client
+    return None
+
+
+@login_required
+def raise_complaint(request):
+    client = get_client_for_user(request.user)
+    if client is None:
+        messages.error(request, "No company account is linked to your login.")
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        subject = request.POST.get("subject", "").strip()
+        description = request.POST.get("description", "").strip()
+        if subject and description:
+            ClientComplaint.objects.create(
+                client=client,
+                raised_by=request.user,
+                subject=subject,
+                description=description,
+            )
+            messages.success(request, "Your complaint has been submitted.")
+            return redirect("my_complaints")
+        messages.error(request, "Subject and description are required.")
+
+    return render(request, "Raise Complaint.html", {})
+
+
+@login_required
+def my_complaints(request):
+    client = get_client_for_user(request.user)
+    if client is None:
+        messages.error(request, "No company account is linked to your login.")
+        return redirect("dashboard")
+
+    complaints = ClientComplaint.objects.filter(client=client)
+    return render(request, "My Complaints.html", {"complaints": complaints})
+
+
+@staff_member_required
+def admin_client_complaints(request):
+    if request.method == "POST":
+        complaint_id = request.POST.get("complaint_id")
+        new_status = request.POST.get("status")
+        admin_response = request.POST.get("admin_response", "").strip()
+        complaint = get_object_or_404(ClientComplaint, id=complaint_id)
+        if new_status in dict(ClientComplaint.STATUS_CHOICES):
+            complaint.status = new_status
+            complaint.admin_response = admin_response
+            if new_status in ("RESOLVED", "CLOSED"):
+                complaint.resolved_by = request.user
+                complaint.resolved_at = timezone.now()
+            complaint.save()
+            messages.success(request, "Complaint updated.")
+        return redirect("admin_client_complaints")
+
+    status_filter = request.GET.get("status", "")
+    complaints = ClientComplaint.objects.select_related("client", "raised_by").all()
+    if status_filter:
+        complaints = complaints.filter(status=status_filter)
+
+    context = {
+        "complaints": complaints,
+        "status_filter": status_filter,
+        "status_choices": ClientComplaint.STATUS_CHOICES,
+    }
+    return render(request, "Admin Client Complaints.html", context)
+
+
+@staff_member_required
+def admin_demo_requests(request):
+    if request.method == "POST":
+        demo_id = request.POST.get("demo_id")
+        new_status = request.POST.get("status")
+        demo = get_object_or_404(DemoRequest, id=demo_id)
+        if new_status in dict(DemoRequest.STATUS_CHOICES):
+            demo.status = new_status
+            demo.handled_by = request.user
+            demo.handled_at = timezone.now()
+            demo.save()
+            messages.success(request, "Demo request status updated.")
+        return redirect("admin_demo_requests")
+
+    status_filter = request.GET.get("status", "")
+    demo_requests = DemoRequest.objects.all()
+    if status_filter:
+        demo_requests = demo_requests.filter(status=status_filter)
+
+    context = {
+        "demo_requests": demo_requests,
+        "status_filter": status_filter,
+        "status_choices": DemoRequest.STATUS_CHOICES,
+    }
+    return render(request, "Admin Demo Requests.html", context)
 
 
 

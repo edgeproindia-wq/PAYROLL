@@ -35,9 +35,6 @@
   <div class="login-card">
     <h1 id="loginHeading">Edge Pro Axis</h1>
     <p class="sub" id="loginSub">Payroll &amp; HR Management - Sign in to continue</p>
-    <p class="text-end small mb-3">
-      <a href="#" id="adminToggleLink" onclick="toggleAdminMode(event)">Admin Login</a>
-    </p>
     {% if error %}
     <div class="alert alert-danger py-2 small">{{ error }}</div>
     {% endif %}
@@ -55,26 +52,6 @@
     </form>
     <p class="text-center small mt-3 mb-0" id="registerLink"><a href="{% url 'register' %}">New employee? Create an account</a></p>
   </div>
-<script>
-  function toggleAdminMode(e){
-    e.preventDefault();
-    const heading = document.getElementById('loginHeading');
-    const sub = document.getElementById('loginSub');
-    const link = document.getElementById('adminToggleLink');
-    const registerLink = document.getElementById('registerLink');
-    const isAdmin = heading.textContent === 'Admin Login';
-    if (isAdmin) {
-      heading.textContent = 'Edge Pro Axis';
-      sub.textContent = 'Payroll & HR Management - Sign in to continue';
-      link.textContent = 'Admin Login';
-      registerLink.style.display = '';
-    } else {
-      heading.textContent = 'Admin Login';
-      sub.textContent = 'Sign in with your administrator credentials';
-      link.textContent = 'Employee Login';
-      registerLink.style.display = 'none';
-    }
-  }
-</script>
+
 </body>
 </html>

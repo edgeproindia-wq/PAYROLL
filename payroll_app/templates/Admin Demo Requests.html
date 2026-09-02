@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+  <h1 style="font-size:20px; margin:0;">Demo / Book Requests</h1>
+</div>
+
+<div style="margin-bottom:16px;">
+  <a href="{% url 'admin_demo_requests' %}" style="margin-right:12px; {% if not status_filter %}font-weight:600;{% endif %}">All</a>
+  {% for value, label in status_choices %}
+  <a href="{% url 'admin_demo_requests' %}?status={{ value }}" style="margin-right:12px; {% if status_filter == value %}font-weight:600;{% endif %}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<table class="table" style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr style="text-align:left; border-bottom:2px solid #e2e8f0;">
+      <th style="padding:8px;">Name</th>
+      <th style="padding:8px;">Company</th>
+      <th style="padding:8px;">Email</th>
+      <th style="padding:8px;">Phone</th>
+      <th style="padding:8px;">Message</th>
+      <th style="padding:8px;">Status</th>
+      <th style="padding:8px;">Received</th>
+      <th style="padding:8px;">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for demo in demo_requests %}
+    <tr style="border-bottom:1px solid #f1f5f9;">
+      <td style="padding:8px;">{{ demo.full_name }}</td>
+      <td style="padding:8px;">{{ demo.company_name }}</td>
+      <td style="padding:8px;">{{ demo.email }}</td>
+      <td style="padding:8px;">{{ demo.phone }}</td>
+      <td style="padding:8px; max-width:220px;">{{ demo.message|truncatewords:15 }}</td>
+      <td style="padding:8px;">{{ demo.get_status_display }}</td>
+      <td style="padding:8px;">{{ demo.created_at|date:"d M Y, H:i" }}</td>
+      <td style="padding:8px;">
+        <form method="post" style="display:flex; gap:6px;">
+          {% csrf_token %}
+          <input type="hidden" name="demo_id" value="{{ demo.id }}">
+          <select name="status" style="font-size:12px;">
+            {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if demo.status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" style="font-size:12px; padding:2px 8px;">Update</button>
+        </form>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8" style="padding:16px; text-align:center; color:#94a3b8;">No demo requests found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Raise a Complaint</h1>
+    <p class="page-subtitle">Let us know about any issue and our team will respond.</p>
+  </div>
+</div>
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+<form method="post" style="max-width:600px;">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label class="form-label small">Subject</label>
+    <input type="text" name="subject" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label small">Description</label>
+    <textarea name="description" class="form-control" rows="5" required></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Submit Complaint</button>
+  <a href="{% url 'my_complaints' %}" class="btn btn-outline">View My Complaints</a>
+</form>
+{% endblock %}

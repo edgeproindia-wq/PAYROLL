@@ -77,6 +77,10 @@ urlpatterns += [
     path("send_verification_code/", views.send_verification_code, name="send_verification_code"),
     path("verify_code/", views.verify_code, name="verify_code"),
     path("request_demo/", views.request_demo, name="request_demo"),
+    path("admin_demo_requests/", views.admin_demo_requests, name="admin_demo_requests"),
+    path("raise_complaint/", views.raise_complaint, name="raise_complaint"),
+    path("my_complaints/", views.my_complaints, name="my_complaints"),
+    path("admin_client_complaints/", views.admin_client_complaints, name="admin_client_complaints"),
     path("approval_center/", views.approval_center, name="approval_center"),
     path("approve_leave/<int:pk>/", views.approve_leave, name="approve_leave"),
     path("reject_leave/<int:pk>/", views.reject_leave, name="reject_leave"),
@@ -84,6 +88,7 @@ urlpatterns += [
     path("approve_registration/<int:pk>/", views.approve_registration, name="approve_registration"),
     path("reject_registration/<int:pk>/", views.reject_registration, name="reject_registration"),
     path("admin_summary/", views.admin_summary, name="admin_summary"),
+    path("admin_dashboard/", views.admin_summary, name="admin_dashboard"),
     path("payroll_dashboard/", views.payroll_dashboard, name="payroll_dashboard"),
 ]
 

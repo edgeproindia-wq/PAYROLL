@@ -9,8 +9,65 @@ class EmployeeManager(models.Manager):
         return sorted(self.get_queryset(), key=sort_key)
 
 
+class Client(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('ACTIVE', 'Active'),
+        ('INACTIVE', 'Inactive'),
+        ('SUSPENDED', 'Suspended'),
+        ('REJECTED', 'Rejected'),
+    ]
+    company_name = models.CharField(max_length=200)
+    contact_name = models.CharField(max_length=150, blank=True)
+    email = models.EmailField(unique=True)
+    mobile = models.CharField(max_length=15, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    rejection_reason = models.TextField(blank=True)
+    approved_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_clients')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.company_name
+
+
+class ClientProfile(models.Model):
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='client_profile')
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='profiles')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.client.company_name}"
+
+
+class ClientComplaint(models.Model):
+    STATUS_CHOICES = [
+        ('OPEN', 'Open'),
+        ('IN_PROGRESS', 'In Progress'),
+        ('RESOLVED', 'Resolved'),
+        ('CLOSED', 'Closed'),
+    ]
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='complaints')
+    raised_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='raised_complaints')
+    subject = models.CharField(max_length=200)
+    description = models.TextField()
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='OPEN')
+    admin_response = models.TextField(blank=True)
+    resolved_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='resolved_complaints')
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.subject + " - " + self.client.company_name
+
+
 class Employee(models.Model):
     user = models.OneToOneField('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='employee_profile')
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='employees', null=True, blank=True)
     EMPLOYMENT_STATUS_CHOICES = [
         ('ACTIVE', 'Active'),
         ('ON_LEAVE', 'On Leave'),
@@ -212,6 +269,7 @@ class PayrollRunLine(models.Model):
 
 class CompanySettings(models.Model):
     company_name = models.CharField(max_length=200, default='My Company')
+    client = models.OneToOneField('payroll_app.Client', on_delete=models.CASCADE, related_name='settings', null=True, blank=True)
     address = models.CharField(max_length=500, blank=True)
     pan_number = models.CharField(max_length=10, blank=True)
     gst_number = models.CharField(max_length=15, blank=True)
@@ -400,11 +458,19 @@ class EmployeeSalaryComponent(models.Model):
 
 
 class DemoRequest(models.Model):
+    STATUS_CHOICES = [
+        ('NEW', 'New'),
+        ('CONTACTED', 'Contacted'),
+        ('CLOSED', 'Closed'),
+    ]
     full_name = models.CharField(max_length=150)
     company_name = models.CharField(max_length=150)
     email = models.EmailField()
     phone = models.CharField(max_length=20)
     message = models.TextField(blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='NEW')
+    handled_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='handled_demo_requests')
+    handled_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Client Complaints</h1>
+  </div>
+</div>
+<div style="margin-bottom:16px;">
+  <a href="{% url 'admin_client_complaints' %}" style="margin-right:12px; {% if not status_filter %}font-weight:600;{% endif %}">All</a>
+  {% for value, label in status_choices %}
+  <a href="{% url 'admin_client_complaints' %}?status={{ value }}" style="margin-right:12px; {% if status_filter == value %}font-weight:600;{% endif %}">{{ label }}</a>
+  {% endfor %}
+</div>
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr style="text-align:left; border-bottom:2px solid #e2e8f0;">
+      <th style="padding:8px;">Company</th>
+      <th style="padding:8px;">Raised By</th>
+      <th style="padding:8px;">Subject</th>
+      <th style="padding:8px;">Description</th>
+      <th style="padding:8px;">Status</th>
+      <th style="padding:8px;">Raised On</th>
+      <th style="padding:8px;">Respond</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in complaints %}
+    <tr style="border-bottom:1px solid #f1f5f9;">
+      <td style="padding:8px;">{{ c.client.company_name }}</td>
+      <td style="padding:8px;">{{ c.raised_by.username|default:"-" }}</td>
+      <td style="padding:8px;">{{ c.subject }}</td>
+      <td style="padding:8px; max-width:200px;">{{ c.description|truncatewords:15 }}</td>
+      <td style="padding:8px;">{{ c.get_status_display }}</td>
+      <td style="padding:8px;">{{ c.created_at|date:"d M Y" }}</td>
+      <td style="padding:8px;">
+        <form method="post" style="display:flex; flex-direction:column; gap:4px; min-width:180px;">
+          {% csrf_token %}
+          <input type="hidden" name="complaint_id" value="{{ c.id }}">
+          <select name="status" style="font-size:12px;">
+            {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if c.status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <textarea name="admin_response" placeholder="Response..." style="font-size:12px;" rows="2">{{ c.admin_response }}</textarea>
+          <button type="submit" style="font-size:12px; padding:2px 8px;">Update</button>
+        </form>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="7" style="padding:16px; text-align:center; color:#94a3b8;">No complaints found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
