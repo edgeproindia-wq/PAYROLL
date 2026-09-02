@@ -139,3 +139,5 @@ SMS_API_KEY = os.environ.get("SMS_API_KEY", "")
 SMS_SENDER_ID = os.environ.get("SMS_SENDER_ID", "")
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CSRF_TRUSTED_ORIGINS = ["https://payroll-ixgj.onrender.com"]
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
