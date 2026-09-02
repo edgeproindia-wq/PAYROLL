@@ -3,9 +3,15 @@ from django.contrib.auth.models import User
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        user, created = User.objects.get_or_create(username="admin", defaults={"is_staff": True, "is_superuser": True})
+        username = "edgepro_admin"
+        password = "EdgePro@2026!"
+        user, created = User.objects.get_or_create(
+            username=username,
+            defaults={"is_staff": True, "is_superuser": True, "is_active": True}
+        )
         user.is_staff = True
         user.is_superuser = True
-        user.set_password("EdgePro@2026")
+        user.is_active = True
+        user.set_password(password)
         user.save()
-        self.stdout.write("Admin password reset successfully.")
+        self.stdout.write(f"Admin account ready: username={username}")
