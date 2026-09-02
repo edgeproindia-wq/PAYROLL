@@ -1,5 +1,7 @@
 ﻿from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
+from django.utils.decorators import method_decorator
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from decimal import Decimal
@@ -920,6 +922,7 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from .forms import RegisterForm
 
+@method_decorator(never_cache, name="dispatch")
 class CustomLoginView(LoginView):
     template_name = "login.html"
 
