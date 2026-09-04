@@ -1306,6 +1306,9 @@ def send_verification_code(request):
         )
         return JsonResponse({'success': True, 'message': 'Verification code sent to your email.'})
     except Exception as e:
+        import traceback
+        print("SEND_MAIL_ERROR: " + type(e).__name__ + ": " + str(e))
+        traceback.print_exc()
         otp_record.delete()
         return JsonResponse({'success': False, 'message': 'Failed to send verification email. Please try again.'})
 
