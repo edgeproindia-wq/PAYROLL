@@ -38,6 +38,16 @@
     {% if error %}
     <div class="alert alert-danger py-2 small">{{ error }}</div>
     {% endif %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-danger py-2 small">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+    {% if form.errors %}
+      <div class="alert alert-danger py-2 small">
+        Please enter a correct username and password. Note that both fields may be case-sensitive.
+      </div>
+    {% endif %}
     <form method="post">
       {% csrf_token %}
       <div class="mb-3">
