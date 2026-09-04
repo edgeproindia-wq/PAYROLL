@@ -130,15 +130,27 @@ def employee_master_import_xlsx(request):
     if request.method == 'POST' and request.FILES.get('xlsx_file'):
         f = request.FILES['xlsx_file']
         wb = openpyxl.load_workbook(f, data_only=True)
-        ws = wb.active
 
-        header_row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True))
-        col_map = {key: find_col(header_row, aliases) for key, aliases in HEADER_ALIASES.items()}
+        ws = None
+        header_row = None
+        col_map = None
+        for candidate_sheet in wb.worksheets:
+            candidate_header = next(candidate_sheet.iter_rows(min_row=1, max_row=1, values_only=True), None)
+            if not candidate_header:
+                continue
+            candidate_map = {key: find_col(candidate_header, aliases) for key, aliases in HEADER_ALIASES.items()}
+            if candidate_map['code'] is not None and candidate_map['name'] is not None:
+                ws = candidate_sheet
+                header_row = candidate_header
+                col_map = candidate_map
+                break
 
-        missing_required = [k for k in ('code', 'name') if col_map[k] is None]
-        if missing_required:
-            found = ', '.join(str(h) for h in header_row if h)
-            messages.error(request, f"Import failed: could not find required column(s) {missing_required} in the uploaded file. Columns found: {found}")
+        if ws is None:
+            sheet_summaries = '; '.join(
+                sheet.title + ': ' + ', '.join(str(h) for h in (next(sheet.iter_rows(min_row=1, max_row=1, values_only=True), []) or []) if h)
+                for sheet in wb.worksheets
+            )
+            messages.error(request, f"Import failed: could not find a sheet with both 'code' and 'name' columns. Sheets found: {sheet_summaries}")
             return redirect('employee_master')
 
         rows = list(ws.iter_rows(min_row=2, values_only=True))
@@ -1033,6 +1045,68 @@ def admin_client_complaints(request):
         "status_choices": ClientComplaint.STATUS_CHOICES,
     }
     return render(request, "Admin Client Complaints.html", context)
+
+
+import json as _json_biometric
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse as _JsonResponseBiometric
+
+
+BIOMETRIC_WEBHOOK_SECRET = "edgepro-biometric-2026-secret"
+
+
+@csrf_exempt
+def biometric_webhook(request, secret):
+    if secret != BIOMETRIC_WEBHOOK_SECRET:
+        return _JsonResponseBiometric({"error": "Invalid secret"}, status=403)
+
+    if request.method != "POST":
+        return _JsonResponseBiometric({"error": "POST required"}, status=405)
+
+    try:
+        if request.content_type == "application/json":
+            payload = _json_biometric.loads(request.body)
+        else:
+            payload = request.POST.dict()
+    except Exception:
+        payload = {"raw_body": request.body.decode("utf-8", errors="replace")}
+
+    employee_code = str(payload.get("employee_code") or payload.get("empcode") or payload.get("userid") or "").strip()
+    punch_time_raw = payload.get("punch_time") or payload.get("timestamp") or payload.get("time")
+    punch_type_raw = str(payload.get("punch_type") or payload.get("direction") or "").upper()
+
+    if not employee_code or not punch_time_raw:
+        BiometricPunch.objects.create(
+            employee_code=employee_code or "UNKNOWN",
+            punch_time=timezone.now(),
+            punch_type="UNKNOWN",
+            raw_payload=_json_biometric.dumps(payload),
+            processed=False,
+        )
+        return _JsonResponseBiometric({"error": "Missing employee_code or punch_time, logged raw"}, status=400)
+
+    from dateutil import parser as _date_parser
+    try:
+        punch_dt = _date_parser.parse(str(punch_time_raw))
+        if timezone.is_naive(punch_dt):
+            punch_dt = timezone.make_aware(punch_dt)
+    except Exception:
+        punch_dt = timezone.now()
+
+    punch_type = "IN" if "IN" in punch_type_raw else ("OUT" if "OUT" in punch_type_raw else "UNKNOWN")
+
+    matched_employee = Employee.objects.filter(employee_code__iexact=employee_code).first()
+
+    BiometricPunch.objects.create(
+        employee_code=employee_code,
+        employee=matched_employee,
+        punch_time=punch_dt,
+        punch_type=punch_type,
+        raw_payload=_json_biometric.dumps(payload),
+        processed=False,
+    )
+
+    return _JsonResponseBiometric({"success": True, "matched_employee": bool(matched_employee)})
 
 
 @staff_member_required

@@ -78,6 +78,7 @@ urlpatterns += [
     path("verify_code/", views.verify_code, name="verify_code"),
     path("request_demo/", views.request_demo, name="request_demo"),
     path("admin_demo_requests/", views.admin_demo_requests, name="admin_demo_requests"),
+    path("biometric/webhook/<str:secret>/", views.biometric_webhook, name="biometric_webhook"),
     path("raise_complaint/", views.raise_complaint, name="raise_complaint"),
     path("my_complaints/", views.my_complaints, name="my_complaints"),
     path("admin_client_complaints/", views.admin_client_complaints, name="admin_client_complaints"),

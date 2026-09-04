@@ -6,3 +6,6 @@ db.sqlite3
 staticfiles/
 *.log
 .venv/
+*.html
+cookies.txt
+*_cookies.txt

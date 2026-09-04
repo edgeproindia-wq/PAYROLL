@@ -162,6 +162,9 @@ class Attendance(models.Model):
     date = models.DateField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PRESENT')
     remarks = models.CharField(max_length=255, blank=True)
+    time_in = models.TimeField(null=True, blank=True)
+    time_out = models.TimeField(null=True, blank=True)
+    source = models.CharField(max_length=20, default='MANUAL', choices=[('MANUAL', 'Manual'), ('BIOMETRIC', 'Biometric')])
 
     class Meta:
         ordering = ['-date']
@@ -522,3 +525,25 @@ class UserRegistrationStatus(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.status}"
+
+
+
+class BiometricPunch(models.Model):
+    PUNCH_TYPE_CHOICES = [
+        ('IN', 'In'),
+        ('OUT', 'Out'),
+        ('UNKNOWN', 'Unknown'),
+    ]
+    employee_code = models.CharField(max_length=20)
+    employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name='biometric_punches')
+    punch_time = models.DateTimeField()
+    punch_type = models.CharField(max_length=10, choices=PUNCH_TYPE_CHOICES, default='UNKNOWN')
+    raw_payload = models.TextField(blank=True)
+    processed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-punch_time']
+
+    def __str__(self):
+        return self.employee_code + " - " + str(self.punch_time)
