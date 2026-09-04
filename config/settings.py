@@ -12,6 +12,12 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+import socket
+
+_original_getaddrinfo = socket.getaddrinfo
+def _ipv4_only_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    return _original_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+socket.getaddrinfo = _ipv4_only_getaddrinfo
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
